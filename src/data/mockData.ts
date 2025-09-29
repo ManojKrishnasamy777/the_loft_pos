@@ -42,3 +42,5 @@ export const mockAuditLogs: AuditLog[] = [
     userAgent: 'Mozilla/5.0'
   }
 ];
+
+export { mockMenuItems, mockCategories }
