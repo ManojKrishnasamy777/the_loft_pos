@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiClient } from '../../config/api';
 import { 
   Calendar, 
   Download, 
@@ -13,6 +15,46 @@ import {
 export function ReportsPage() {
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [selectedReport, setSelectedReport] = useState('sales');
+  const [reportData, setReportData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadReportData();
+  }, [selectedReport, dateRange]);
+
+  const loadReportData = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        ...(dateRange.from && { dateFrom: dateRange.from }),
+        ...(dateRange.to && { dateTo: dateRange.to }),
+      };
+
+      let data;
+      switch (selectedReport) {
+        case 'sales':
+          data = await apiClient.getSalesReport(params);
+          break;
+        case 'items':
+          data = await apiClient.getItemPerformanceReport(params);
+          break;
+        case 'customers':
+          data = await apiClient.getCustomerAnalytics(params);
+          break;
+        case 'trends':
+          data = await apiClient.getDailySalesReport(params);
+          break;
+        default:
+          data = await apiClient.getSalesReport(params);
+      }
+      
+      setReportData(data);
+    } catch (error) {
+      console.error('Failed to load report data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const reportTypes = [
     { id: 'sales', name: 'Sales Report', icon: DollarSign },
@@ -36,19 +78,24 @@ export function ReportsPage() {
     { name: 'Nachos with Cheese', quantity: 76, revenue: 9120, percentage: 12 }
   ];
 
-  const handleExport = () => {
-    // In a real application, this would generate and download a report
-    const csvContent = salesData.map(row => 
-      `${row.date},${row.orders},${row.revenue},${row.avgOrder}`
-    ).join('\n');
-    
-    const blob = new Blob([`Date,Orders,Revenue,Avg Order\n${csvContent}`], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'sales-report.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const handleExport = async () => {
+    try {
+      const params = {
+        ...(dateRange.from && { dateFrom: dateRange.from }),
+        ...(dateRange.to && { dateTo: dateRange.to }),
+      };
+      
+      const blob = await apiClient.exportReport(selectedReport, params);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${selectedReport}-report-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export report. Please try again.');
+    }
   };
 
   return (
@@ -130,7 +177,9 @@ export function ReportsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">₹40,260</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  ₹{reportData?.totalSales?.toFixed(2) || '0.00'}
+                </p>
                 <p className="text-sm text-green-600">+12% from last week</p>
               </div>
               <div className="bg-green-100 p-3 rounded-full">
@@ -143,7 +192,9 @@ export function ReportsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                <p className="text-2xl font-bold text-gray-900">223</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {reportData?.totalOrders || 0}
+                </p>
                 <p className="text-sm text-blue-600">+8% from last week</p>
               </div>
               <div className="bg-blue-100 p-3 rounded-full">
@@ -156,7 +207,9 @@ export function ReportsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Avg Order Value</p>
-                <p className="text-2xl font-bold text-gray-900">₹180</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  ₹{reportData?.averageOrderValue?.toFixed(2) || '0.00'}
+                </p>
                 <p className="text-sm text-purple-600">+5% from last week</p>
               </div>
               <div className="bg-purple-100 p-3 rounded-full">
@@ -169,7 +222,9 @@ export function ReportsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Customers</p>
-                <p className="text-2xl font-bold text-gray-900">1,247</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {reportData?.totalCustomers || 0}
+                </p>
                 <p className="text-sm text-amber-600">+15% from last week</p>
               </div>
               <div className="bg-amber-100 p-3 rounded-full">
@@ -178,6 +233,13 @@ export function ReportsPage() {
             </div>
           </div>
         </div>
+
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+            <span className="ml-2 text-gray-600">Loading report data...</span>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Daily Sales Chart */}
@@ -190,24 +252,24 @@ export function ReportsPage() {
             </div>
             <div className="p-6">
               <div className="space-y-4">
-                {salesData.map((day) => (
-                  <div key={day.date} className="flex items-center justify-between">
+                {(reportData?.salesByHour || []).slice(0, 5).map((hour, index) => (
+                  <div key={index} className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex justify-between mb-1">
                         <span className="text-sm font-medium text-gray-900">
-                          {new Date(day.date).toLocaleDateString()}
+                          {hour.hour}:00 - {hour.hour + 1}:00
                         </span>
-                        <span className="text-sm text-gray-600">₹{day.revenue}</span>
+                        <span className="text-sm text-gray-600">₹{hour.sales.toFixed(2)}</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className="bg-amber-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${(day.revenue / 10000) * 100}%` }}
+                          style={{ width: `${Math.min((hour.sales / 1000) * 100, 100)}%` }}
                         />
                       </div>
                       <div className="flex justify-between mt-1 text-xs text-gray-500">
-                        <span>{day.orders} orders</span>
-                        <span>Avg: ₹{day.avgOrder}</span>
+                        <span>{hour.orderCount} orders</span>
+                        <span>Avg: ₹{hour.orderCount > 0 ? (hour.sales / hour.orderCount).toFixed(0) : '0'}</span>
                       </div>
                     </div>
                   </div>
@@ -226,15 +288,15 @@ export function ReportsPage() {
             </div>
             <div className="p-6">
               <div className="space-y-6">
-                {topItems.map((item, index) => (
-                  <div key={item.name} className="flex items-center space-x-4">
+                {(reportData?.topItems || []).slice(0, 4).map((item, index) => (
+                  <div key={item.item?.name || index} className="flex items-center space-x-4">
                     <div className="bg-amber-100 text-amber-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium">
                       {index + 1}
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h3 className="font-medium text-gray-900">{item.name}</h3>
+                          <h3 className="font-medium text-gray-900">{item.item?.name || 'Unknown Item'}</h3>
                           <p className="text-sm text-gray-600">{item.quantity} sold</p>
                         </div>
                         <div className="text-right">
@@ -245,7 +307,7 @@ export function ReportsPage() {
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${item.percentage * 4}%` }}
+                          style={{ width: `${Math.min((item.revenue / (reportData?.totalSales || 1)) * 100, 100)}%` }}
                         />
                       </div>
                     </div>

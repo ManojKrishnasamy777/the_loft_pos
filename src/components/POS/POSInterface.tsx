@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, ShoppingCart, CreditCard, Printer } from 'lucide-react';
-import { mockMenuItems, mockCategories } from '../../data/mockData';
+import { mockMenuItems, mockCategories, loadMenuData } from '../../data/mockData';
 import { usePOS } from '../../contexts/POSContext';
 import { PaymentMethod } from '../../types';
 import { MenuItemCard } from './MenuItemCard';
@@ -12,6 +13,10 @@ export function POSInterface() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { cart, calculateTotals } = usePOS();
+
+  useEffect(() => {
+    loadMenuData();
+  }, []);
 
   const filteredItems = mockMenuItems.filter(item => {
     const matchesCategory = selectedCategory === 'all' || item.category.id === selectedCategory;

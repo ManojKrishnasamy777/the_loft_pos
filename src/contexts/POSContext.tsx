@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { apiClient } from '../config/api';
 import { MenuItem, OrderItem, Order, PaymentMethod, TaxConfiguration } from '../types';
 
 interface CartItem {
@@ -96,48 +97,28 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
     paymentMethod: PaymentMethod;
     paymentData?: any;
   }): Promise<Order> => {
-    const totals = calculateTotals();
-    const orderNumber = `ORD-${Date.now()}`;
-    
-    const orderItems: OrderItem[] = cart.map(cartItem => ({
-      id: `item-${cartItem.menuItem.id}-${Date.now()}`,
-      menuItem: cartItem.menuItem,
-      quantity: cartItem.quantity,
-      price: cartItem.menuItem.price,
-      taxAmount: cartItem.menuItem.price * cartItem.quantity * mockTaxConfig.rate,
-      subtotal: cartItem.menuItem.price * cartItem.quantity,
-      total: cartItem.menuItem.price * cartItem.quantity * (1 + mockTaxConfig.rate)
-    }));
+    try {
+      const orderData = {
+        items: cart.map(cartItem => ({
+          menuItemId: cartItem.menuItem.id,
+          quantity: cartItem.quantity,
+        })),
+        customerEmail: customerData.email,
+        customerName: customerData.name,
+        paymentMethod: customerData.paymentMethod,
+        metadata: customerData.paymentData,
+      };
 
-    // Mock order creation - in production this would be an API call
-    const order: Order = {
-      id: `order-${Date.now()}`,
-      orderNumber,
-      items: orderItems,
-      subtotal: totals.subtotal,
-      taxAmount: totals.taxAmount,
-      total: totals.total,
-      customerEmail: customerData.email,
-      customerName: customerData.name,
-      paymentMethod: customerData.paymentMethod,
-      status: 'completed',
-      createdBy: {
-        id: '1',
-        name: 'Current User',
-        email: 'user@example.com',
-        role: { id: '1', name: 'Cashier', permissions: [] },
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    // Clear cart after successful order
-    clearCart();
-
-    return order;
+      const order = await apiClient.createOrder(orderData);
+      
+      // Clear cart after successful order
+      clearCart();
+      
+      return order;
+    } catch (error) {
+      console.error('Failed to create order:', error);
+      throw error;
+    }
   };
 
   return (

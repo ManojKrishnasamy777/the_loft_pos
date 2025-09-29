@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiClient } from '../../config/api';
 import { 
   ShoppingCart, 
   DollarSign, 
@@ -11,49 +12,84 @@ import {
 } from 'lucide-react';
 
 export function Dashboard() {
-  const stats = [
+  const [stats, setStats] = useState({
+    todaysSales: 0,
+    ordersToday: 0,
+    activeCustomers: 0,
+    averageOrder: 0,
+  });
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [topItems, setTopItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      const [orderStats, todaysOrders, salesReport] = await Promise.all([
+        apiClient.getOrderStats(),
+        apiClient.getTodaysOrders(),
+        apiClient.getSalesReport(),
+      ]);
+
+      setStats({
+        todaysSales: orderStats.totalRevenue || 0,
+        ordersToday: orderStats.totalOrders || 0,
+        activeCustomers: 156, // This would come from customer analytics
+        averageOrder: orderStats.averageOrderValue || 0,
+      });
+
+      setRecentOrders(todaysOrders.slice(0, 4));
+      setTopItems(salesReport.topItems?.slice(0, 4) || []);
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const dashboardStats = [
     {
       name: 'Today\'s Sales',
-      value: '₹12,450',
+      value: `₹${stats.todaysSales.toFixed(2)}`,
       change: '+12%',
       changeType: 'positive' as const,
       icon: DollarSign
     },
     {
       name: 'Orders Today',
-      value: '85',
+      value: stats.ordersToday.toString(),
       change: '+5%',
       changeType: 'positive' as const,
       icon: ShoppingCart
     },
     {
       name: 'Active Customers',
-      value: '156',
+      value: stats.activeCustomers.toString(),
       change: '+8%',
       changeType: 'positive' as const,
       icon: Users
     },
     {
       name: 'Average Order',
-      value: '₹146',
+      value: `₹${stats.averageOrder.toFixed(2)}`,
       change: '-2%',
       changeType: 'negative' as const,
       icon: TrendingUp
     }
-  ];
-
-  const recentOrders = [
-    { id: 'ORD-001', customer: 'John Doe', amount: 245, status: 'completed', time: '2 mins ago' },
-    { id: 'ORD-002', customer: 'Jane Smith', amount: 180, status: 'pending', time: '5 mins ago' },
-    { id: 'ORD-003', customer: 'Mike Johnson', amount: 320, status: 'completed', time: '8 mins ago' },
-    { id: 'ORD-004', customer: 'Sarah Wilson', amount: 95, status: 'completed', time: '12 mins ago' }
-  ];
-
-  const topItems = [
-    { name: 'Popcorn', sales: 45, revenue: 3600 },
-    { name: 'Filter Coffee', sales: 38, revenue: 1140 },
-    { name: 'Nachos with Cheese', sales: 25, revenue: 3000 },
-    { name: 'Chicken Biryani', sales: 22, revenue: 4840 }
   ];
 
   return (
@@ -66,7 +102,7 @@ export function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat) => {
+          {dashboardStats.map((stat) => {
             const Icon = stat.icon;
             return (
               <div key={stat.name} className="bg-white rounded-lg shadow p-6">
@@ -103,11 +139,11 @@ export function Dashboard() {
                 <div key={order.id} className="px-6 py-4 hover:bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">{order.id}</p>
-                      <p className="text-sm text-gray-600">{order.customer}</p>
+                      <p className="font-medium text-gray-900">{order.orderNumber}</p>
+                      <p className="text-sm text-gray-600">{order.customerName || 'Walk-in Customer'}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-gray-900">₹{order.amount}</p>
+                      <p className="font-medium text-gray-900">₹{order.total}</p>
                       <div className="flex items-center space-x-2">
                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
                           order.status === 'completed' 
@@ -116,7 +152,9 @@ export function Dashboard() {
                         }`}>
                           {order.status}
                         </span>
-                        <span className="text-xs text-gray-500">{order.time}</span>
+                        <span className="text-xs text-gray-500">
+                          {new Date(order.createdAt).toLocaleTimeString()}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -147,8 +185,8 @@ export function Dashboard() {
                         {index + 1}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{item.name}</p>
-                        <p className="text-sm text-gray-600">{item.sales} sold today</p>
+                        <p className="font-medium text-gray-900">{item.item?.name || item.name}</p>
+                        <p className="text-sm text-gray-600">{item.quantity} sold today</p>
                       </div>
                     </div>
                     <p className="font-medium text-gray-900">₹{item.revenue}</p>

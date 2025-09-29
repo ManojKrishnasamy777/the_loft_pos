@@ -1,0 +1,92 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+  JoinColumn,
+} from 'typeorm';
+import { User } from './user.entity';
+import { OrderItem } from './order-item.entity';
+import { Payment } from './payment.entity';
+
+export enum OrderStatus {
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  REFUNDED = 'refunded',
+}
+
+export enum PaymentMethod {
+  CASH = 'cash',
+  CARD = 'card',
+  UPI = 'upi',
+  NETBANKING = 'netbanking',
+}
+
+@Entity('orders')
+export class Order {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ unique: true, length: 50 })
+  orderNumber: string;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  subtotal: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  taxAmount: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  total: number;
+
+  @Column({ nullable: true, length: 150 })
+  customerEmail: string;
+
+  @Column({ nullable: true, length: 100 })
+  customerName: string;
+
+  @Column({ nullable: true, length: 15 })
+  customerPhone: string;
+
+  @Column({
+    type: 'enum',
+    enum: PaymentMethod,
+    default: PaymentMethod.CASH,
+  })
+  paymentMethod: PaymentMethod;
+
+  @Column({
+    type: 'enum',
+    enum: OrderStatus,
+    default: OrderStatus.PENDING,
+  })
+  status: OrderStatus;
+
+  @Column({ name: 'created_by' })
+  createdById: string;
+
+  @ManyToOne(() => User, (user) => user.orders)
+  @JoinColumn({ name: 'created_by' })
+  createdBy: User;
+
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, {
+    cascade: true,
+  })
+  items: OrderItem[];
+
+  @OneToMany(() => Payment, (payment) => payment.order)
+  payments: Payment[];
+
+  @Column({ type: 'json', nullable: true })
+  metadata: any;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
