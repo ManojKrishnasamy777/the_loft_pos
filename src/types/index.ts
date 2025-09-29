@@ -69,12 +69,43 @@ export interface OrderItem {
 export type PaymentMethod = 'cash' | 'card' | 'upi' | 'netbanking';
 export type OrderStatus = 'pending' | 'completed' | 'cancelled' | 'refunded';
 
+export interface RazorpayConfig {
+  keyId: string;
+  keySecret: string;
+  webhookSecret: string;
+  isTestMode: boolean;
+  currency: string;
+}
+
+export interface RazorpayPayment {
+  id: string;
+  orderId: string;
+  paymentId: string;
+  signature: string;
+  amount: number;
+  currency: string;
+  status: 'created' | 'authorized' | 'captured' | 'refunded' | 'failed';
+  method: string;
+  createdAt: string;
+}
+
 export interface TaxConfiguration {
   id: string;
   name: string;
   rate: number;
   isActive: boolean;
   isDefault: boolean;
+}
+
+export interface PaymentGatewayConfig {
+  id: string;
+  name: string;
+  provider: 'razorpay' | 'stripe' | 'payu';
+  isActive: boolean;
+  isDefault: boolean;
+  config: RazorpayConfig;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PrinterConfiguration {

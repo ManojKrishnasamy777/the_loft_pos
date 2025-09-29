@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, CreditCard, Smartphone, DollarSign, Globe } from 'lucide-react';
+import { X, CreditCard, Smartphone, DollarSign, Globe, Loader2 } from 'lucide-react';
 import { PaymentMethod } from '../../types';
 import { usePOS } from '../../contexts/POSContext';
+import { usePayment } from '../../contexts/PaymentContext';
 
 interface PaymentModalProps {
   total: number;
@@ -14,8 +15,10 @@ export function PaymentModal({ total, onClose }: PaymentModalProps) {
   const [customerEmail, setCustomerEmail] = useState('');
   const [cashReceived, setCashReceived] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
 
   const { processOrder } = usePOS();
+  const { processRazorpayPayment, verifyPayment, isPaymentGatewayReady } = usePayment();
 
   const paymentMethods = [
     { id: 'cash' as PaymentMethod, label: 'Cash', icon: DollarSign },
@@ -25,24 +28,59 @@ export function PaymentModal({ total, onClose }: PaymentModalProps) {
   ];
 
   const handlePayment = async () => {
+    setPaymentError('');
+    
     if (paymentMethod === 'cash' && cashReceived < total) {
-      alert('Insufficient cash received');
+      setPaymentError('Insufficient cash received');
       return;
     }
 
     setIsProcessing(true);
 
     try {
+      let paymentResult = null;
+
+      // Handle different payment methods
+      if (paymentMethod === 'card' || paymentMethod === 'upi' || paymentMethod === 'netbanking') {
+        if (!isPaymentGatewayReady) {
+          throw new Error('Payment gateway not ready. Please try again.');
+        }
+
+        // Process online payment through Razorpay
+        const orderData = {
+          orderNumber: `ORD-${Date.now()}`,
+          customerName,
+          customerEmail,
+          total
+        };
+
+        paymentResult = await processRazorpayPayment(total, orderData);
+        
+        // Verify payment
+        const isVerified = await verifyPayment(paymentResult);
+        if (!isVerified) {
+          throw new Error('Payment verification failed');
+        }
+      }
+
+      // Create order after successful payment
       const order = await processOrder({
         name: customerName || undefined,
         email: customerEmail || undefined,
-        paymentMethod
+        paymentMethod,
+        paymentData: paymentResult
       });
 
-      alert(`Order ${order.orderNumber} processed successfully!`);
+      // Show success message
+      const successMessage = paymentMethod === 'cash' 
+        ? `Order ${order.orderNumber} processed successfully!`
+        : `Payment successful! Order ${order.orderNumber} confirmed.`;
+      
+      alert(successMessage);
       onClose();
     } catch (error) {
-      alert('Failed to process order. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process payment. Please try again.';
+      setPaymentError(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -103,22 +141,38 @@ export function PaymentModal({ total, onClose }: PaymentModalProps) {
 
           {/* Payment Method Selection */}
           <div className="space-y-4">
-            <h3 className="font-medium text-gray-900">Payment Method</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-gray-900">Payment Method</h3>
+              {!isPaymentGatewayReady && (
+                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                  Online payments loading...
+                </span>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               {paymentMethods.map(method => {
                 const Icon = method.icon;
+                const isOnlinePayment = method.id !== 'cash';
+                const isDisabled = isOnlinePayment && !isPaymentGatewayReady;
+                
                 return (
                   <button
                     key={method.id}
                     onClick={() => setPaymentMethod(method.id)}
+                    disabled={isDisabled}
                     className={`p-4 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
                       paymentMethod === method.id
                         ? 'border-amber-500 bg-amber-50 text-amber-700'
+                        : isDisabled
+                        ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <Icon className="h-6 w-6" />
                     <span className="text-sm font-medium">{method.label}</span>
+                    {isOnlinePayment && (
+                      <span className="text-xs text-gray-500">via Razorpay</span>
+                    )}
                   </button>
                 );
               })}
@@ -164,10 +218,31 @@ export function PaymentModal({ total, onClose }: PaymentModalProps) {
             </div>
           )}
 
+          {/* Payment Error */}
+          {paymentError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-red-600 text-sm">{paymentError}</p>
+            </div>
+          )}
+
+          {/* Payment Gateway Info */}
+          {(paymentMethod === 'card' || paymentMethod === 'upi' || paymentMethod === 'netbanking') && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-center space-x-2">
+                <CreditCard className="h-4 w-4 text-blue-600" />
+                <p className="text-blue-800 text-sm font-medium">Secure Payment by Razorpay</p>
+              </div>
+              <p className="text-blue-600 text-xs mt-1">
+                Your payment information is encrypted and secure
+              </p>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex space-x-3 pt-4">
             <button
               onClick={onClose}
+              disabled={isProcessing}
               className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors"
             >
               Cancel
@@ -175,9 +250,15 @@ export function PaymentModal({ total, onClose }: PaymentModalProps) {
             <button
               onClick={handlePayment}
               disabled={isProcessing || (paymentMethod === 'cash' && cashReceived < total)}
-              className="flex-1 bg-amber-600 text-white py-3 rounded-lg font-medium hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 bg-amber-600 text-white py-3 rounded-lg font-medium hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
             >
-              {isProcessing ? 'Processing...' : 'Complete Order'}
+              {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
+              <span>
+                {isProcessing 
+                  ? (paymentMethod === 'cash' ? 'Processing...' : 'Processing Payment...')
+                  : 'Complete Order'
+                }
+              </span>
             </button>
           </div>
         </div>

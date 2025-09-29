@@ -2,11 +2,13 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { POSProvider } from './contexts/POSContext';
+import { PaymentProvider } from './contexts/PaymentContext';
 import { LoginForm } from './components/Auth/LoginForm';
 import { Navbar } from './components/Layout/Navbar';
 import { Dashboard } from './components/Dashboard/Dashboard';
 import { POSInterface } from './components/POS/POSInterface';
 import { ReportsPage } from './components/Reports/ReportsPage';
+import { SettingsPage } from './components/Settings/SettingsPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -37,20 +39,22 @@ function AppContent() {
   }
 
   return (
-    <POSProvider>
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/pos" element={<POSInterface />} />
-          <Route path="/orders" element={<div className="p-6">Orders Page - Coming Soon</div>} />
-          <Route path="/menu" element={<div className="p-6">Menu Management - Coming Soon</div>} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/settings" element={<div className="p-6">Settings - Coming Soon</div>} />
-        </Routes>
-      </div>
-    </POSProvider>
+    <PaymentProvider>
+      <POSProvider>
+        <div className="min-h-screen bg-gray-50">
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/pos" element={<POSInterface />} />
+            <Route path="/orders" element={<div className="p-6">Orders Page - Coming Soon</div>} />
+            <Route path="/menu" element={<div className="p-6">Menu Management - Coming Soon</div>} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Routes>
+        </div>
+      </POSProvider>
+    </PaymentProvider>
   );
 }
 

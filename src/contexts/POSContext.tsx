@@ -21,6 +21,7 @@ interface POSContextType {
     name?: string;
     email?: string;
     paymentMethod: PaymentMethod;
+    paymentData?: any;
   }) => Promise<Order>;
 }
 
@@ -93,6 +94,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
     name?: string;
     email?: string;
     paymentMethod: PaymentMethod;
+    paymentData?: any;
   }): Promise<Order> => {
     const totals = calculateTotals();
     const orderNumber = `ORD-${Date.now()}`;
