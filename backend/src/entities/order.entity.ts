@@ -11,6 +11,7 @@ import {
 import { User } from './user.entity';
 import { OrderItem } from './order-item.entity';
 import { Payment } from './payment.entity';
+import { PaymentMethod } from '../Enum/paymentmethodEnum';
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -19,12 +20,7 @@ export enum OrderStatus {
   REFUNDED = 'refunded',
 }
 
-export enum PaymentMethod {
-  CASH = 'cash',
-  CARD = 'card',
-  UPI = 'upi',
-  NETBANKING = 'netbanking',
-}
+
 
 @Entity('orders')
 export class Order {

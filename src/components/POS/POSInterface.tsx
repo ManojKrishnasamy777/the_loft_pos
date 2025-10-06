@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import React, { useState, useEffect } from 'react';
 import { Search, ShoppingCart, CreditCard, Printer } from 'lucide-react';
 import { mockMenuItems, mockCategories, loadMenuData } from '../../data/mockData';
@@ -21,7 +20,7 @@ export function POSInterface() {
   const filteredItems = mockMenuItems.filter(item => {
     const matchesCategory = selectedCategory === 'all' || item.category.id === selectedCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
+      item.description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch && item.isActive;
   });
 
@@ -33,7 +32,7 @@ export function POSInterface() {
       <div className="flex-1 p-6">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Point of Sale</h1>
-          
+
           {/* Search Bar */}
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -50,11 +49,10 @@ export function POSInterface() {
           <div className="flex space-x-2 mb-6 overflow-x-auto">
             <button
               onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
-                selectedCategory === 'all'
+              className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${selectedCategory === 'all'
                   ? 'bg-amber-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
+                }`}
             >
               All Items
             </button>
@@ -62,11 +60,10 @@ export function POSInterface() {
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${
-                  selectedCategory === category.id
+                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${selectedCategory === category.id
                     ? 'bg-amber-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 {category.name}
               </button>

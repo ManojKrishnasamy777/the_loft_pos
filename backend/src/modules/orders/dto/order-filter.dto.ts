@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsString, IsDateString, IsNumber, Min } from 'class-validator';
 import { Type } from 'class-transformer';
-import { OrderStatus, PaymentMethod } from '../../../entities/order.entity';
+import { OrderStatus } from '../../../entities/order.entity';
+import { PaymentMethod } from '../../../Enum/paymentmethodEnum';
 
 export class OrderFilterDto {
   @ApiProperty({ enum: OrderStatus, required: false })

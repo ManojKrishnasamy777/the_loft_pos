@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+// ✅ Added Like to the imports
+import { Repository, Between, Like } from 'typeorm';
 import { Order, OrderStatus } from '../../entities/order.entity';
 import { OrderItem } from '../../entities/order-item.entity';
 import { MenuItem } from '../../entities/menu-item.entity';
@@ -17,7 +18,7 @@ export class OrdersService {
     private orderItemRepository: Repository<OrderItem>,
     @InjectRepository(MenuItem)
     private menuItemRepository: Repository<MenuItem>,
-  ) {}
+  ) { }
 
   async findAll(filterDto?: OrderFilterDto): Promise<{ orders: Order[]; total: number }> {
     const queryBuilder = this.orderRepository.createQueryBuilder('order')
@@ -26,37 +27,31 @@ export class OrdersService {
       .leftJoinAndSelect('order.createdBy', 'createdBy')
       .leftJoinAndSelect('order.payments', 'payments');
 
-    // Apply filters
     if (filterDto?.status) {
       queryBuilder.andWhere('order.status = :status', { status: filterDto.status });
     }
-
     if (filterDto?.paymentMethod) {
-      queryBuilder.andWhere('order.paymentMethod = :paymentMethod', { 
-        paymentMethod: filterDto.paymentMethod 
+      queryBuilder.andWhere('order.paymentMethod = :paymentMethod', {
+        paymentMethod: filterDto.paymentMethod
       });
     }
-
     if (filterDto?.dateFrom && filterDto?.dateTo) {
       queryBuilder.andWhere('order.createdAt BETWEEN :dateFrom AND :dateTo', {
         dateFrom: filterDto.dateFrom,
         dateTo: filterDto.dateTo,
       });
     }
-
     if (filterDto?.customerEmail) {
-      queryBuilder.andWhere('order.customerEmail LIKE :email', { 
-        email: `%${filterDto.customerEmail}%` 
+      queryBuilder.andWhere('order.customerEmail LIKE :email', {
+        email: `%${filterDto.customerEmail}%`
       });
     }
-
     if (filterDto?.orderNumber) {
-      queryBuilder.andWhere('order.orderNumber LIKE :orderNumber', { 
-        orderNumber: `%${filterDto.orderNumber}%` 
+      queryBuilder.andWhere('order.orderNumber LIKE :orderNumber', {
+        orderNumber: `%${filterDto.orderNumber}%`
       });
     }
 
-    // Pagination
     const page = filterDto?.page || 1;
     const limit = filterDto?.limit || 20;
     const skip = (page - 1) * limit;
@@ -65,7 +60,6 @@ export class OrdersService {
     queryBuilder.orderBy('order.createdAt', 'DESC');
 
     const [orders, total] = await queryBuilder.getManyAndCount();
-
     return { orders, total };
   }
 
@@ -74,19 +68,12 @@ export class OrdersService {
       where: { id },
       relations: ['items', 'items.menuItem', 'createdBy', 'payments'],
     });
-
-    if (!order) {
-      throw new NotFoundException('Order not found');
-    }
-
+    if (!order) throw new NotFoundException('Order not found');
     return order;
   }
 
   async create(createOrderDto: CreateOrderDto, userId: string): Promise<Order> {
-    // Generate order number
     const orderNumber = await this.generateOrderNumber();
-
-    // Validate menu items and calculate totals
     let subtotal = 0;
     let taxAmount = 0;
     const orderItems: Partial<OrderItem>[] = [];
@@ -95,7 +82,6 @@ export class OrdersService {
       const menuItem = await this.menuItemRepository.findOne({
         where: { id: item.menuItemId, isActive: true },
       });
-
       if (!menuItem) {
         throw new BadRequestException(`Menu item ${item.menuItemId} not found or inactive`);
       }
@@ -119,7 +105,6 @@ export class OrdersService {
 
     const total = subtotal + taxAmount;
 
-    // Create order
     const order = this.orderRepository.create({
       orderNumber,
       subtotal,
@@ -136,7 +121,6 @@ export class OrdersService {
 
     const savedOrder = await this.orderRepository.save(order);
 
-    // Create order items
     for (const item of orderItems) {
       const orderItem = this.orderItemRepository.create({
         ...item,
@@ -150,8 +134,6 @@ export class OrdersService {
 
   async update(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
     const order = await this.findById(id);
-
-    // Only allow certain fields to be updated
     const allowedUpdates = {
       customerEmail: updateOrderDto.customerEmail,
       customerName: updateOrderDto.customerName,
@@ -159,18 +141,15 @@ export class OrdersService {
       status: updateOrderDto.status,
       metadata: updateOrderDto.metadata,
     };
-
-    // Remove undefined values
-    Object.keys(allowedUpdates).forEach(key => 
-      allowedUpdates[key] === undefined && delete allowedUpdates[key]
+    Object.keys(allowedUpdates).forEach(
+      key => allowedUpdates[key] === undefined && delete allowedUpdates[key]
     );
-
     await this.orderRepository.update(id, allowedUpdates);
     return this.findById(id);
   }
 
   async updateStatus(id: string, status: OrderStatus): Promise<Order> {
-    const order = await this.findById(id);
+    await this.findById(id);
     await this.orderRepository.update(id, { status });
     return this.findById(id);
   }
@@ -182,9 +161,7 @@ export class OrdersService {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     return this.orderRepository.find({
-      where: {
-        createdAt: Between(today, tomorrow),
-      },
+      where: { createdAt: Between(today, tomorrow) },
       relations: ['items', 'items.menuItem', 'createdBy'],
       order: { createdAt: 'DESC' },
     });
@@ -192,18 +169,15 @@ export class OrdersService {
 
   async getOrderStats(dateFrom?: Date, dateTo?: Date) {
     const queryBuilder = this.orderRepository.createQueryBuilder('order');
-
     if (dateFrom && dateTo) {
-      queryBuilder.where('order.createdAt BETWEEN :dateFrom AND :dateTo', {
-        dateFrom,
-        dateTo,
-      });
+      queryBuilder.where('order.createdAt BETWEEN :dateFrom AND :dateTo', { dateFrom, dateTo });
     }
 
     const [totalOrders, completedOrders, totalRevenue] = await Promise.all([
       queryBuilder.getCount(),
       queryBuilder.clone().andWhere('order.status = :status', { status: OrderStatus.COMPLETED }).getCount(),
-      queryBuilder.clone().andWhere('order.status = :status', { status: OrderStatus.COMPLETED })
+      queryBuilder.clone()
+        .andWhere('order.status = :status', { status: OrderStatus.COMPLETED })
         .select('SUM(order.total)', 'total').getRawOne(),
     ]);
 
@@ -212,18 +186,17 @@ export class OrdersService {
       completedOrders,
       pendingOrders: totalOrders - completedOrders,
       totalRevenue: parseFloat(totalRevenue?.total || '0'),
-      averageOrderValue: completedOrders > 0 ? parseFloat(totalRevenue?.total || '0') / completedOrders : 0,
+      averageOrderValue:
+        completedOrders > 0 ? parseFloat(totalRevenue?.total || '0') / completedOrders : 0,
     };
   }
 
   private async generateOrderNumber(): Promise<string> {
     const today = new Date();
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-    
+
     const lastOrder = await this.orderRepository.findOne({
-      where: {
-        orderNumber: Like(`ORD-${dateStr}-%`),
-      },
+      where: { orderNumber: Like(`ORD-${dateStr}-%`) },
       order: { createdAt: 'DESC' },
     });
 

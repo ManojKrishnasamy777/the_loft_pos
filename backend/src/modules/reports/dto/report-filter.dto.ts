@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { OrderStatus, PaymentMethod } from '../../../entities/order.entity';
+import { OrderStatus } from '../../../entities/order.entity';
+import { PaymentMethod } from '../../../Enum/paymentmethodEnum';
 
 export class ReportFilterDto {
   @ApiProperty({ example: '2024-01-01', required: false })

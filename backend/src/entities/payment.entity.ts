@@ -7,7 +7,8 @@ import {
   UpdateDateColumn,
   JoinColumn,
 } from 'typeorm';
-import { Order, PaymentMethod } from './order.entity';
+import { Order } from './order.entity';
+import { PaymentMethod } from '../Enum/paymentmethodEnum';
 
 export enum PaymentStatus {
   PENDING = 'pending',
@@ -15,6 +16,8 @@ export enum PaymentStatus {
   FAILED = 'failed',
   REFUNDED = 'refunded',
 }
+
+
 
 @Entity('payments')
 export class Payment {

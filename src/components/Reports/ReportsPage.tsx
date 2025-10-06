@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { apiClient } from '../../config/api';
-import { 
-  Calendar, 
-  Download, 
-  Filter, 
+import {
+  Calendar,
+  Download,
+  Filter,
   TrendingUp,
   DollarSign,
   ShoppingBag,
@@ -47,7 +46,7 @@ export function ReportsPage() {
         default:
           data = await apiClient.getSalesReport(params);
       }
-      
+
       setReportData(data);
     } catch (error) {
       console.error('Failed to load report data:', error);
@@ -84,7 +83,7 @@ export function ReportsPage() {
         ...(dateRange.from && { dateFrom: dateRange.from }),
         ...(dateRange.to && { dateTo: dateRange.to }),
       };
-      
+
       const blob = await apiClient.exportReport(selectedReport, params);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -157,11 +156,10 @@ export function ReportsPage() {
                 <button
                   key={type.id}
                   onClick={() => setSelectedReport(type.id)}
-                  className={`flex items-center space-x-2 px-4 py-3 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                    selectedReport === type.id
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className={`flex items-center space-x-2 px-4 py-3 rounded-lg font-medium whitespace-nowrap transition-colors ${selectedReport === type.id
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
                 >
                   <Icon className="h-4 w-4" />
                   <span>{type.name}</span>
@@ -262,7 +260,7 @@ export function ReportsPage() {
                         <span className="text-sm text-gray-600">₹{hour.sales.toFixed(2)}</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-amber-600 h-2 rounded-full transition-all duration-500"
                           style={{ width: `${Math.min((hour.sales / 1000) * 100, 100)}%` }}
                         />
@@ -305,7 +303,7 @@ export function ReportsPage() {
                         </div>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all duration-500"
                           style={{ width: `${Math.min((item.revenue / (reportData?.totalSales || 1)) * 100, 100)}%` }}
                         />

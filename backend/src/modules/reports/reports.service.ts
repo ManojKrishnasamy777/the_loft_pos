@@ -21,11 +21,11 @@ export class ReportsService {
     private menuItemRepository: Repository<MenuItem>,
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
-  ) {}
+  ) { }
 
   async getSalesReport(filterDto: ReportFilterDto) {
     const { dateFrom, dateTo, paymentMethod, status } = filterDto;
-    
+
     const queryBuilder = this.orderRepository.createQueryBuilder('order')
       .leftJoinAndSelect('order.items', 'items')
       .leftJoinAndSelect('items.menuItem', 'menuItem')
@@ -188,10 +188,10 @@ export class ReportsService {
 
   async getDailySalesReport(filterDto: ReportFilterDto) {
     const { dateFrom, dateTo } = filterDto;
-    
+
     const startDate = dateFrom ? new Date(dateFrom) : new Date();
     const endDate = dateTo ? new Date(dateTo) : new Date();
-    
+
     if (!dateFrom) {
       startDate.setDate(startDate.getDate() - 30); // Last 30 days by default
     }
@@ -278,7 +278,7 @@ export class ReportsService {
 
   async exportReport(reportType: string, filterDto: ReportFilterDto) {
     let data;
-    
+
     switch (reportType) {
       case 'sales':
         data = await this.getSalesReport(filterDto);
@@ -287,7 +287,7 @@ export class ReportsService {
         data = await this.getItemPerformanceReport(filterDto);
         break;
       case 'daily':
-        data = await getDailySalesReport(filterDto);
+        data = await this.getDailySalesReport(filterDto);
         break;
       case 'customers':
         data = await this.getCustomerAnalytics(filterDto);
@@ -303,20 +303,20 @@ export class ReportsService {
   private convertToCSV(data: any, reportType: string): string {
     // This is a simplified CSV conversion
     // In a real application, you might want to use a proper CSV library
-    
+
     if (reportType === 'sales') {
       let csv = 'Date,Total Sales,Total Orders,Average Order Value\n';
       csv += `${new Date().toISOString().split('T')[0]},${data.totalSales},${data.totalOrders},${data.averageOrderValue}\n`;
-      
+
       csv += '\nTop Items\n';
       csv += 'Item Name,Quantity Sold,Revenue\n';
       data.topItems.forEach(item => {
         csv += `${item.item.name},${item.quantity},${item.revenue}\n`;
       });
-      
+
       return csv;
     }
-    
+
     // Add other report type conversions as needed
     return JSON.stringify(data, null, 2);
   }

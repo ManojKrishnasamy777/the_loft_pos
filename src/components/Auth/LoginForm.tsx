@@ -10,10 +10,12 @@ export function LoginForm() {
   const { login, isLoading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
+    debugger
     e.preventDefault();
     setError('');
 
     const success = await login(email, password);
+    debugger
     if (!success) {
       setError('Invalid credentials. Please try again.');
     }

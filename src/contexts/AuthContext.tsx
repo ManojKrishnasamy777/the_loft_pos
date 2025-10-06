@@ -72,18 +72,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check for stored auth token
     const token = localStorage.getItem('authToken');
     const userData = localStorage.getItem('userData');
-    
+
     if (token && userData) {
       setUser(JSON.parse(userData));
     }
-    
+
     setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
+
     try {
+      debugger
       const response = await apiClient.login(email, password);
       setUser(response.user);
       localStorage.setItem('userData', JSON.stringify(response.user));
@@ -104,10 +105,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const hasPermission = (resource: string, action: string): boolean => {
     if (!user) return false;
-    
+
     // Admin has all permissions
     if (user.role.name === 'Administrator') return true;
-    
+
     return user.role.permissions.some(permission => {
       if (permission.resource === '*') return true;
       if (permission.resource === resource) {
