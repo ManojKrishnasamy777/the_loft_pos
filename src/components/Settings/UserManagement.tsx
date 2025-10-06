@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../../config/api';
-import { Plus, Edit, Trash2, UserPlus, Shield, Mail } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, UserPlus, Shield, Mail } from 'lucide-react';
 
 interface User {
   id: string;

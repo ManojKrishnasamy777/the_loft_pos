@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../../config/api';
-import { Save, Plus, Edit, Trash2 } from 'lucide-react';
+import { Save, Plus, CreditCard as Edit, Trash2 } from 'lucide-react';
 
 export function TaxSettings() {
   const [taxRates, setTaxRates] = useState([

@@ -1,17 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../../config/api';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Search,
-  Tag,
-  Coffee,
-  X,
-  Save,
-  Eye,
-  EyeOff
-} from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Search, Tag, Coffee, X, Save, Eye, EyeOff } from 'lucide-react';
 
 interface MenuItem {
   id: string;
