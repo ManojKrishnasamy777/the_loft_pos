@@ -206,22 +206,20 @@ export function MenuManagement() {
             <div className="flex">
               <button
                 onClick={() => setActiveTab('items')}
-                className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
-                  activeTab === 'items'
-                    ? 'text-amber-600 border-b-2 border-amber-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${activeTab === 'items'
+                  ? 'text-amber-600 border-b-2 border-amber-600'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 <Coffee className="h-5 w-5 inline-block mr-2" />
                 Menu Items ({menuItems.length})
               </button>
               <button
                 onClick={() => setActiveTab('categories')}
-                className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
-                  activeTab === 'categories'
-                    ? 'text-amber-600 border-b-2 border-amber-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${activeTab === 'categories'
+                  ? 'text-amber-600 border-b-2 border-amber-600'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 <Tag className="h-5 w-5 inline-block mr-2" />
                 Categories ({categories.length})
@@ -308,8 +306,8 @@ export function MenuManagement() {
                       </div>
                       <p className="text-sm text-gray-600 mb-3">{item.description}</p>
                       <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-amber-600">₹{item.price.toFixed(2)}</span>
-                        <span className="text-xs text-gray-500">Tax: {(item.taxRate * 100).toFixed(0)}%</span>
+                        <span className="text-lg font-bold text-amber-600">₹{Number(item.price || 0).toFixed(2)}</span>
+                        <span className="text-xs text-gray-500">Tax: {(Number(item.taxRate || 0) * 100).toFixed(0)}%</span>
                       </div>
                     </div>
                   ))}

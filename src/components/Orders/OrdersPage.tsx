@@ -201,10 +201,10 @@ export function OrdersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
-                            ₹{order.total.toFixed(2)}
+                            ₹{Number(order.total)?.toFixed(2) || "0.00"}
                           </div>
                           <div className="text-xs text-gray-500">
-                            Tax: ₹{order.taxAmount.toFixed(2)}
+                            Tax: ₹{Number(order.taxAmount)?.toFixed(2) || "0.00"}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -283,6 +283,7 @@ export function OrdersPage() {
       {selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
+            {/* Header */}
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">Order Details</h2>
@@ -295,6 +296,7 @@ export function OrdersPage() {
               </div>
             </div>
 
+            {/* Order Info */}
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -303,7 +305,9 @@ export function OrdersPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Status</p>
-                  <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
+                  <span
+                    className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}
+                  >
                     {getStatusIcon(selectedOrder.status)}
                     <span className="capitalize">{selectedOrder.status}</span>
                   </span>
@@ -321,36 +325,49 @@ export function OrdersPage() {
                 </div>
               </div>
 
+              {/* Order Items */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Order Items</h3>
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  {selectedOrder.items?.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center p-4 border-b border-gray-200 last:border-b-0">
-                      <div>
-                        <p className="font-medium text-gray-900">{item.menuItem?.name || 'Item'}</p>
-                        <p className="text-sm text-gray-600">Qty: {item.quantity} × ₹{item.price.toFixed(2)}</p>
+                  {selectedOrder.items?.map((item, index) => {
+                    const price = item.price != null ? Number(item.price) : 0;
+                    const total = item.total != null ? Number(item.total) : 0;
+
+                    return (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-4 border-b border-gray-200 last:border-b-0"
+                      >
+                        <div>
+                          <p className="font-medium text-gray-900">{item.menuItem?.name || 'Item'}</p>
+                          <p className="text-sm text-gray-600">
+                            Qty: {item.quantity} × ₹{price.toFixed(2)}
+                          </p>
+                        </div>
+                        <p className="font-medium text-gray-900">₹{total.toFixed(2)}</p>
                       </div>
-                      <p className="font-medium text-gray-900">₹{item.total.toFixed(2)}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
+              {/* Totals */}
               <div className="border-t border-gray-200 pt-4 space-y-2">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
-                  <span>₹{selectedOrder.subtotal.toFixed(2)}</span>
+                  <span>₹{Number(selectedOrder.subtotal ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Tax</span>
-                  <span>₹{selectedOrder.taxAmount.toFixed(2)}</span>
+                  <span>₹{Number(selectedOrder.taxAmount ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t">
                   <span>Total</span>
-                  <span>₹{selectedOrder.total.toFixed(2)}</span>
+                  <span>₹{Number(selectedOrder.total ?? 0).toFixed(2)}</span>
                 </div>
               </div>
 
+              {/* Order Date */}
               <div className="text-sm text-gray-500">
                 <p>Order placed on {new Date(selectedOrder.createdAt).toLocaleString()}</p>
               </div>
@@ -358,6 +375,7 @@ export function OrdersPage() {
           </div>
         </div>
       )}
+
     </div>
   );
 }
