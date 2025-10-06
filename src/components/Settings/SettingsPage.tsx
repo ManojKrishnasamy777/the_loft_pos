@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
-import { 
-  Settings, 
-  CreditCard, 
-  Printer, 
-  Calculator, 
-  Users, 
+import {
+  Settings,
+  CreditCard,
+  Printer,
+  Calculator,
+  Users,
   Shield,
   Bell,
   Database
 } from 'lucide-react';
 import { PaymentSettings } from './PaymentSettings';
+import { PrinterSettings } from './PrinterSettings';
+import { TaxSettings } from './TaxSettings';
+import { UserManagement } from './UserManagement';
+import { SecuritySettings } from './SecuritySettings';
+import { NotificationSettings } from './NotificationSettings';
+import { BackupSettings } from './BackupSettings';
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState('payment');
@@ -29,17 +35,17 @@ export function SettingsPage() {
       case 'payment':
         return <PaymentSettings />;
       case 'printer':
-        return <div className="p-6 text-center text-gray-500">Printer Configuration - Coming Soon</div>;
+        return <PrinterSettings />;
       case 'tax':
-        return <div className="p-6 text-center text-gray-500">Tax Settings - Coming Soon</div>;
+        return <TaxSettings />;
       case 'users':
-        return <div className="p-6 text-center text-gray-500">User Management - Coming Soon</div>;
+        return <UserManagement />;
       case 'security':
-        return <div className="p-6 text-center text-gray-500">Security Settings - Coming Soon</div>;
+        return <SecuritySettings />;
       case 'notifications':
-        return <div className="p-6 text-center text-gray-500">Notification Settings - Coming Soon</div>;
+        return <NotificationSettings />;
       case 'backup':
-        return <div className="p-6 text-center text-gray-500">Backup & Restore - Coming Soon</div>;
+        return <BackupSettings />;
       default:
         return <PaymentSettings />;
     }
