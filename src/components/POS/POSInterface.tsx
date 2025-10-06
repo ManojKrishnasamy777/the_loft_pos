@@ -6,22 +6,51 @@ import { PaymentMethod } from '../../types';
 import { MenuItemCard } from './MenuItemCard';
 import { Cart } from './Cart';
 import { PaymentModal } from './PaymentModal';
+import { apiClient } from '../../config/api';
+import { PrintService } from '../../services/printService';
 
 export function POSInterface() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const { cart, calculateTotals } = usePOS();
+  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [lastOrder, setLastOrder] = useState<any>(null);
+  const { cart, calculateTotals, clearCart } = usePOS();
 
   useEffect(() => {
     loadMenuData();
+    fetchMenuItems();
   }, []);
 
-  const filteredItems = mockMenuItems.filter(item => {
-    const matchesCategory = selectedCategory === 'all' || item.category.id === selectedCategory;
+  const fetchMenuItems = async () => {
+    try {
+      setLoading(true);
+      const [itemsData, categoriesData] = await Promise.all([
+        apiClient.getMenuItems(),
+        apiClient.getCategories()
+      ]);
+
+      setMenuItems(itemsData);
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error('Failed to fetch menu data:', error);
+      setMenuItems(mockMenuItems);
+      setCategories(mockCategories);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredItems = menuItems.filter(item => {
+    const categoryId = item.categoryId || item.category?.id;
+    const matchesCategory = selectedCategory === 'all' || categoryId === selectedCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch && item.isActive;
+      (item.description || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const isActive = item.isActive !== undefined ? item.isActive : item.is_active;
+    const isAvailable = item.isAvailable !== undefined ? item.isAvailable : item.is_available !== false;
+    return matchesCategory && matchesSearch && isActive && isAvailable;
   });
 
   const { subtotal, taxAmount, total } = calculateTotals();
@@ -56,7 +85,7 @@ export function POSInterface() {
             >
               All Items
             </button>
-            {mockCategories.map(category => (
+            {categories.map(category => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
@@ -72,16 +101,24 @@ export function POSInterface() {
         </div>
 
         {/* Menu Items Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredItems.map(item => (
-            <MenuItemCard key={item.id} item={item} />
-          ))}
-        </div>
-
-        {filteredItems.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No items found matching your search.</p>
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredItems.map(item => (
+                <MenuItemCard key={item.id} item={item} />
+              ))}
+            </div>
+
+            {filteredItems.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No items found matching your search.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -126,11 +163,22 @@ export function POSInterface() {
             </button>
 
             <button
-              disabled={cart.length === 0}
+              onClick={async () => {
+                if (lastOrder) {
+                  await PrintService.printReceipt(lastOrder, {
+                    showLogo: true,
+                    showGst: true,
+                    showQr: false
+                  });
+                } else {
+                  alert('No order to print. Complete an order first.');
+                }
+              }}
+              disabled={!lastOrder}
               className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               <Printer className="h-4 w-4" />
-              <span>Print Receipt</span>
+              <span>Print Last Receipt</span>
             </button>
           </div>
         </div>
@@ -140,7 +188,22 @@ export function POSInterface() {
       {showPaymentModal && (
         <PaymentModal
           total={total}
-          onClose={() => setShowPaymentModal(false)}
+          onClose={() => {
+            setShowPaymentModal(false);
+          }}
+          onSuccess={async (order) => {
+            setLastOrder(order);
+            const settings = await apiClient.getSettings();
+            const autoPrint = settings.find((s: any) => s.key === 'auto_print')?.value === 'true';
+
+            if (autoPrint) {
+              await PrintService.printReceipt(order, {
+                showLogo: true,
+                showGst: true,
+                showQr: false
+              });
+            }
+          }}
         />
       )}
     </div>

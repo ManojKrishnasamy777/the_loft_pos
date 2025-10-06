@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../config/api';
-import { 
-  ShoppingCart, 
-  DollarSign, 
-  Users, 
+import {
+  ShoppingCart,
+  DollarSign,
+  Users,
   TrendingUp,
   Clock,
   Coffee,
   Star,
-  Calendar
+  Calendar,
+  FileText,
+  Menu
 } from 'lucide-react';
 
 export function Dashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     todaysSales: 0,
     ordersToday: 0,
@@ -162,7 +166,10 @@ export function Dashboard() {
               ))}
             </div>
             <div className="px-6 py-3 bg-gray-50">
-              <button className="text-sm text-amber-600 hover:text-amber-700 font-medium">
+              <button
+                onClick={() => navigate('/orders')}
+                className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+              >
                 View all orders →
               </button>
             </div>
@@ -201,23 +208,35 @@ export function Dashboard() {
         <div className="mt-8 bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <button className="flex items-center space-x-3 p-4 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors">
+            <button
+              onClick={() => navigate('/pos')}
+              className="flex items-center space-x-3 p-4 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors"
+            >
               <Coffee className="h-6 w-6 text-amber-600" />
               <span className="font-medium text-gray-900">New Order</span>
             </button>
-            
-            <button className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-              <Calendar className="h-6 w-6 text-blue-600" />
+
+            <button
+              onClick={() => navigate('/reports')}
+              className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              <FileText className="h-6 w-6 text-blue-600" />
               <span className="font-medium text-gray-900">View Reports</span>
             </button>
-            
-            <button className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-              <Users className="h-6 w-6 text-green-600" />
+
+            <button
+              onClick={() => navigate('/menu')}
+              className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+            >
+              <Menu className="h-6 w-6 text-green-600" />
               <span className="font-medium text-gray-900">Manage Menu</span>
             </button>
-            
-            <button className="flex items-center space-x-3 p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
-              <TrendingUp className="h-6 w-6 text-purple-600" />
+
+            <button
+              onClick={() => navigate('/reports')}
+              className="flex items-center space-x-3 p-4 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
+            >
+              <TrendingUp className="h-6 w-6 text-teal-600" />
               <span className="font-medium text-gray-900">Analytics</span>
             </button>
           </div>

@@ -7,9 +7,10 @@ import { usePayment } from '../../contexts/PaymentContext';
 interface PaymentModalProps {
   total: number;
   onClose: () => void;
+  onSuccess?: (order: any) => void;
 }
 
-export function PaymentModal({ total, onClose }: PaymentModalProps) {
+export function PaymentModal({ total, onClose, onSuccess }: PaymentModalProps) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -72,11 +73,16 @@ export function PaymentModal({ total, onClose }: PaymentModalProps) {
       });
 
       // Show success message
-      const successMessage = paymentMethod === 'cash' 
+      const successMessage = paymentMethod === 'cash'
         ? `Order ${order.orderNumber} processed successfully!`
         : `Payment successful! Order ${order.orderNumber} confirmed.`;
-      
+
       alert(successMessage);
+
+      if (onSuccess) {
+        onSuccess(order);
+      }
+
       onClose();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to process payment. Please try again.';

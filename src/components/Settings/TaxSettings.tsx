@@ -4,23 +4,59 @@ import { Save, Plus, CreditCard as Edit, Trash2 } from 'lucide-react';
 
 export function TaxSettings() {
   const [taxRates, setTaxRates] = useState([
-    { id: '1', name: 'GST (5%)', rate: 0.05, isDefault: true },
+    { id: '1', name: 'GST (5%)', rate: 0.05, isDefault: false },
     { id: '2', name: 'GST (12%)', rate: 0.12, isDefault: false },
-    { id: '3', name: 'GST (18%)', rate: 0.18, isDefault: false }
+    { id: '3', name: 'GST (18%)', rate: 0.18, isDefault: true },
+    { id: '4', name: 'GST (28%)', rate: 0.28, isDefault: false }
   ]);
-  const [defaultTaxRate, setDefaultTaxRate] = useState('0.05');
+  const [defaultTaxRate, setDefaultTaxRate] = useState('0.18');
+  const [taxEnabled, setTaxEnabled] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const settings = await apiClient.getSettings();
+      const settingsMap = settings.reduce((acc: any, setting: any) => {
+        acc[setting.key] = setting.value;
+        return acc;
+      }, {});
+
+      setDefaultTaxRate(settingsMap.tax_rate || '0.18');
+      setTaxEnabled(settingsMap.tax_enabled === 'true');
+    } catch (error) {
+      console.error('Failed to load tax settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
-      await apiClient.updateSetting('tax', {
-        value: { defaultRate: defaultTaxRate, rates: taxRates }
-      });
+      await Promise.all([
+        apiClient.updateSetting('tax_rate', { value: defaultTaxRate }),
+        apiClient.updateSetting('tax_enabled', { value: taxEnabled.toString() })
+      ]);
       alert('Tax settings saved successfully!');
     } catch (error) {
       console.error('Failed to save tax settings:', error);
       alert('Failed to save tax settings. Please try again.');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+          <span className="ml-2 text-gray-600">Loading settings...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow">
@@ -30,6 +66,19 @@ export function TaxSettings() {
       </div>
 
       <div className="p-6 space-y-6">
+        <div className="flex items-center space-x-3 mb-6">
+          <input
+            type="checkbox"
+            id="taxEnabled"
+            checked={taxEnabled}
+            onChange={(e) => setTaxEnabled(e.target.checked)}
+            className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+          />
+          <label htmlFor="taxEnabled" className="text-sm font-medium text-gray-700">
+            Enable Tax Calculation
+          </label>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Default Tax Rate

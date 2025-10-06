@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, Printer, TestTube } from 'lucide-react';
 import { apiClient } from '../../config/api';
+import { PrintService } from '../../services/printService';
 
 export function PrinterSettings() {
   const [printerType, setPrinterType] = useState('thermal');
@@ -8,18 +9,42 @@ export function PrinterSettings() {
   const [printerPort, setPrinterPort] = useState('9100');
   const [paperSize, setPaperSize] = useState('80mm');
   const [autoPrint, setAutoPrint] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const settings = await apiClient.getSettings();
+      const settingsMap = settings.reduce((acc: any, setting: any) => {
+        acc[setting.key] = setting.value;
+        return acc;
+      }, {});
+
+      setPrinterType(settingsMap.printer_type || 'thermal');
+      setPrinterIp(settingsMap.printer_ip || '');
+      setPrinterPort(settingsMap.printer_port || '9100');
+      setPaperSize(settingsMap.printer_paper_size || '80mm');
+      setAutoPrint(settingsMap.auto_print === 'true');
+    } catch (error) {
+      console.error('Failed to load printer settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
-      await apiClient.updateSetting('printer', {
-        value: {
-          type: printerType,
-          ip: printerIp,
-          port: printerPort,
-          paperSize,
-          autoPrint
-        }
-      });
+      await Promise.all([
+        apiClient.updateSetting('printer_type', { value: printerType }),
+        apiClient.updateSetting('printer_ip', { value: printerIp }),
+        apiClient.updateSetting('printer_port', { value: printerPort }),
+        apiClient.updateSetting('printer_paper_size', { value: paperSize }),
+        apiClient.updateSetting('auto_print', { value: autoPrint.toString() }),
+        apiClient.updateSetting('printer_enabled', { value: 'true' })
+      ]);
       alert('Printer settings saved successfully!');
     } catch (error) {
       console.error('Failed to save printer settings:', error);
@@ -27,9 +52,25 @@ export function PrinterSettings() {
     }
   };
 
-  const handleTestPrint = () => {
-    alert('Test print initiated. Check your printer.');
+  const handleTestPrint = async () => {
+    try {
+      await PrintService.testPrint();
+    } catch (error) {
+      console.error('Test print failed:', error);
+      alert('Test print failed. Please check your printer configuration.');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+          <span className="ml-2 text-gray-600">Loading settings...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow">
