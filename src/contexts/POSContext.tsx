@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { apiClient } from '../config/api';
 import { MenuItem, OrderItem, Order, PaymentMethod, TaxConfiguration } from '../types';
+import { EmailService } from '../services/emailService';
 
 interface CartItem {
   menuItem: MenuItem;
@@ -116,10 +117,18 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
       };
 
       const order = await apiClient.createOrder(orderData);
-      
-      // Clear cart after successful order
+
+      if (customerData.email && order.status === 'completed') {
+        try {
+          await EmailService.sendOrderConfirmation(order);
+          console.log('Order confirmation email sent to:', customerData.email);
+        } catch (emailError) {
+          console.error('Failed to send confirmation email:', emailError);
+        }
+      }
+
       clearCart();
-      
+
       return order;
     } catch (error) {
       console.error('Failed to create order:', error);

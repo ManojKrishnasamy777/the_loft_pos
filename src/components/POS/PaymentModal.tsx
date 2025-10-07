@@ -66,7 +66,6 @@ export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }
         }
       }
 
-      // Create order after successful payment
       const order = await processOrder({
         name: customerName || undefined,
         email: customerEmail || undefined,
@@ -76,10 +75,10 @@ export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }
         paymentData: paymentResult
       });
 
-      // Show success message
+      const emailNote = customerEmail ? '\n\nA confirmation email has been sent to your email address.' : '';
       const successMessage = paymentMethod === 'cash'
-        ? `Order ${order.orderNumber} processed successfully!`
-        : `Payment successful! Order ${order.orderNumber} confirmed.`;
+        ? `Order ${order.orderNumber} completed successfully!${emailNote}`
+        : `Payment successful! Order ${order.orderNumber} completed.${emailNote}`;
 
       alert(successMessage);
 

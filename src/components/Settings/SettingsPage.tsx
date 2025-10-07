@@ -8,7 +8,8 @@ import {
   Shield,
   Bell,
   Database,
-  Monitor
+  Monitor,
+  Mail
 } from 'lucide-react';
 import { PaymentSettings } from './PaymentSettings';
 import { PrinterSettings } from './PrinterSettings';
@@ -18,6 +19,7 @@ import { SecuritySettings } from './SecuritySettings';
 import { NotificationSettings } from './NotificationSettings';
 import { BackupSettings } from './BackupSettings';
 import { ScreenManagement } from '../Screens/screens';
+import EmailSettings from './EmailSettings';
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState('payment');
@@ -26,7 +28,8 @@ export function SettingsPage() {
     { id: 'payment', name: 'Payment Gateway', icon: CreditCard },
     { id: 'tax', name: 'Tax Settings', icon: Calculator },
     { id: 'users', name: 'User Management', icon: Users },
-    { id: 'screen', name: 'Screens', icon: Monitor }, // Use a valid icon, e.g., Monitor
+    { id: 'screen', name: 'Screens', icon: Monitor },
+    { id: 'email', name: 'Email Configuration', icon: Mail },
     { id: 'security', name: 'Security', icon: Shield },
     { id: 'notifications', name: 'Notifications', icon: Bell },
     { id: 'backup', name: 'Backup & Restore', icon: Database }
@@ -44,6 +47,8 @@ export function SettingsPage() {
         return <UserManagement />;
       case 'screen':
         return <ScreenManagement />;
+      case 'email':
+        return <EmailSettings />;
       case 'security':
         return <SecuritySettings />;
       case 'notifications':

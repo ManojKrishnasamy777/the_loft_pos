@@ -200,3 +200,17 @@ export interface SalesReport {
     orderCount: number;
   }[];
 }
+
+export interface EmailConfig {
+  id: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassword: string;
+  fromEmail: string;
+  fromName: string;
+  logoUrl: string;
+  isEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
