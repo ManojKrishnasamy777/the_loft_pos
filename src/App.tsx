@@ -11,6 +11,7 @@ import { ReportsPage } from './components/Reports/ReportsPage';
 import { SettingsPage } from './components/Settings/SettingsPage';
 import { OrdersPage } from './components/Orders/OrdersPage';
 import { MenuManagement } from './components/Menu/MenuManagement';
+import { CustomerManagement } from './components/Customers/CustomerManagement';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -51,6 +52,7 @@ function AppContent() {
             <Route path="/pos" element={<POSInterface />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/menu" element={<MenuManagement />} />
+            <Route path="/customers" element={<CustomerManagement />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>

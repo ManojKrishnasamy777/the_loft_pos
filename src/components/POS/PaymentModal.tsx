@@ -6,11 +6,13 @@ import { usePayment } from '../../contexts/PaymentContext';
 
 interface PaymentModalProps {
   total: number;
+  customerId?: string | null;
+  screenId?: string | null;
   onClose: () => void;
   onSuccess?: (order: any) => void;
 }
 
-export function PaymentModal({ total, onClose, onSuccess }: PaymentModalProps) {
+export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }: PaymentModalProps) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -68,6 +70,8 @@ export function PaymentModal({ total, onClose, onSuccess }: PaymentModalProps) {
       const order = await processOrder({
         name: customerName || undefined,
         email: customerEmail || undefined,
+        customerId: customerId || undefined,
+        screenId: screenId || undefined,
         paymentMethod,
         paymentData: paymentResult
       });

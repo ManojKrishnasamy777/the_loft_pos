@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-// ✅ Added Like to the imports
 import { Repository, Between, Like } from 'typeorm';
 import { Order, OrderStatus } from '../../entities/order.entity';
 import { OrderItem } from '../../entities/order-item.entity';
 import { MenuItem } from '../../entities/menu-item.entity';
+import { Customer } from '../../entities/customer.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderFilterDto } from './dto/order-filter.dto';
@@ -18,6 +18,8 @@ export class OrdersService {
     private orderItemRepository: Repository<OrderItem>,
     @InjectRepository(MenuItem)
     private menuItemRepository: Repository<MenuItem>,
+    @InjectRepository(Customer)
+    private customerRepository: Repository<Customer>,
   ) { }
 
   async findAll(filterDto?: OrderFilterDto): Promise<{ orders: Order[]; total: number }> {
@@ -25,6 +27,8 @@ export class OrdersService {
       .leftJoinAndSelect('order.items', 'items')
       .leftJoinAndSelect('items.menuItem', 'menuItem')
       .leftJoinAndSelect('order.createdBy', 'createdBy')
+      .leftJoinAndSelect('order.customer', 'customer')
+      .leftJoinAndSelect('order.screen', 'screen')
       .leftJoinAndSelect('order.payments', 'payments');
 
     if (filterDto?.status) {
@@ -66,7 +70,7 @@ export class OrdersService {
   async findById(id: string): Promise<Order> {
     const order = await this.orderRepository.findOne({
       where: { id },
-      relations: ['items', 'items.menuItem', 'createdBy', 'payments'],
+      relations: ['items', 'items.menuItem', 'createdBy', 'customer', 'screen', 'payments'],
     });
     if (!order) throw new NotFoundException('Order not found');
     return order;
@@ -113,6 +117,8 @@ export class OrdersService {
       customerEmail: createOrderDto.customerEmail,
       customerName: createOrderDto.customerName,
       customerPhone: createOrderDto.customerPhone,
+      customerId: createOrderDto.customerId,
+      screenId: createOrderDto.screenId,
       paymentMethod: createOrderDto.paymentMethod,
       status: OrderStatus.PENDING,
       createdById: userId,
@@ -127,6 +133,19 @@ export class OrdersService {
         orderId: savedOrder.id,
       });
       await this.orderItemRepository.save(orderItem);
+    }
+
+    if (createOrderDto.customerId) {
+      await this.customerRepository.increment(
+        { id: createOrderDto.customerId },
+        'orderCount',
+        1
+      );
+      await this.customerRepository.increment(
+        { id: createOrderDto.customerId },
+        'totalSpent',
+        total
+      );
     }
 
     return this.findById(savedOrder.id);
@@ -162,7 +181,7 @@ export class OrdersService {
 
     return this.orderRepository.find({
       where: { createdAt: Between(today, tomorrow) },
-      relations: ['items', 'items.menuItem', 'createdBy'],
+      relations: ['items', 'items.menuItem', 'createdBy', 'customer', 'screen'],
       order: { createdAt: 'DESC' },
     });
   }

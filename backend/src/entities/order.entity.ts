@@ -9,9 +9,11 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Customer } from './customer.entity';
 import { OrderItem } from './order-item.entity';
 import { Payment } from './payment.entity';
 import { PaymentMethod } from '../Enum/paymentmethodEnum';
+import { Screen } from './screens.entity';
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -47,6 +49,20 @@ export class Order {
 
   @Column({ nullable: true, length: 15 })
   customerPhone: string;
+
+  @Column({ name: 'customer_id', nullable: true })
+  customerId: string;
+
+  @ManyToOne(() => Customer, (customer) => customer.orders, { nullable: true })
+  @JoinColumn({ name: 'customer_id' })
+  customer: Customer;
+
+  @Column({ name: 'screen_id', nullable: true })
+  screenId: string;
+
+  @ManyToOne(() => Screen, { nullable: true })
+  @JoinColumn({ name: 'screen_id' })
+  screen: Screen;
 
   @Column({
     type: 'enum',

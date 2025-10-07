@@ -21,6 +21,8 @@ interface POSContextType {
   processOrder: (customerData: {
     name?: string;
     email?: string;
+    customerId?: string;
+    screenId?: string;
     paymentMethod: PaymentMethod;
     paymentData?: any;
   }) => Promise<Order>;
@@ -94,6 +96,8 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
   const processOrder = async (customerData: {
     name?: string;
     email?: string;
+    customerId?: string;
+    screenId?: string;
     paymentMethod: PaymentMethod;
     paymentData?: any;
   }): Promise<Order> => {
@@ -105,6 +109,8 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
         })),
         customerEmail: customerData.email,
         customerName: customerData.name,
+        customerId: customerData.customerId,
+        screenId: customerData.screenId,
         paymentMethod: customerData.paymentMethod,
         metadata: customerData.paymentData,
       };

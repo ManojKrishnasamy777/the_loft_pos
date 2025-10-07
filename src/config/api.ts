@@ -221,10 +221,40 @@ class ApiClient {
     });
   }
 
-  // ----------------------------
-  // Screens endpoints
-  // ----------------------------
+  // Customers endpoints
+  async getCustomers() {
+    return this.request<any[]>('/customers');
+  }
 
+  async getActiveCustomers() {
+    return this.request<any[]>('/customers/active');
+  }
+
+  async getCustomerById(id: string) {
+    return this.request<any>(`/customers/${id}`);
+  }
+
+  async createCustomer(data: any) {
+    return this.request<any>('/customers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCustomer(id: string, data: any) {
+    return this.request<any>(`/customers/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCustomer(id: string) {
+    return this.request<any>(`/customers/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Screens endpoints
   async getScreens() {
     return this.request<any[]>('/screens');
   }

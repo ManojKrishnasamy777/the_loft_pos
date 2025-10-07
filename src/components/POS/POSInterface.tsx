@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ShoppingCart, CreditCard, Printer } from 'lucide-react';
+import { Search, ShoppingCart, CreditCard, Printer, Users, Layers, Plus } from 'lucide-react';
 import { mockMenuItems, mockCategories, loadMenuData } from '../../data/mockData';
 import { usePOS } from '../../contexts/POSContext';
-import { PaymentMethod } from '../../types';
+import { PaymentMethod, Customer, Screen } from '../../types';
 import { MenuItemCard } from './MenuItemCard';
 import { Cart } from './Cart';
 import { PaymentModal } from './PaymentModal';
@@ -15,13 +15,21 @@ export function POSInterface() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [screens, setScreens] = useState<Screen[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+  const [selectedScreen, setSelectedScreen] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastOrder, setLastOrder] = useState<any>(null);
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [customerFormData, setCustomerFormData] = useState({ name: '', email: '', phone: '' });
   const { cart, calculateTotals, clearCart } = usePOS();
 
   useEffect(() => {
     loadMenuData();
     fetchMenuItems();
+    fetchCustomers();
+    fetchScreens();
   }, []);
 
   const fetchMenuItems = async () => {
@@ -40,6 +48,37 @@ export function POSInterface() {
       setCategories(mockCategories);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      const data = await apiClient.getActiveCustomers();
+      setCustomers(data);
+    } catch (error) {
+      console.error('Failed to fetch customers:', error);
+    }
+  };
+
+  const fetchScreens = async () => {
+    try {
+      const data = await apiClient.getScreens();
+      setScreens(data.filter((s: Screen) => s.isActive));
+    } catch (error) {
+      console.error('Failed to fetch screens:', error);
+    }
+  };
+
+  const handleCreateCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const newCustomer = await apiClient.createCustomer(customerFormData);
+      setCustomers([...customers, newCustomer]);
+      setSelectedCustomer(newCustomer.id);
+      setShowCustomerForm(false);
+      setCustomerFormData({ name: '', email: '', phone: '' });
+    } catch (error) {
+      console.error('Failed to create customer:', error);
     }
   };
 
@@ -125,11 +164,54 @@ export function POSInterface() {
       {/* Right Panel - Cart */}
       <div className="w-96 bg-white shadow-lg border-l">
         <div className="p-6 border-b">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 mb-4">
             <ShoppingCart className="h-6 w-6 text-amber-600" />
             <h2 className="text-xl font-semibold text-gray-900">
               Current Order ({cart.length})
             </h2>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Customer</label>
+              <div className="flex space-x-2">
+                <select
+                  value={selectedCustomer || ''}
+                  onChange={(e) => setSelectedCustomer(e.target.value || null)}
+                  className="flex-1 text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-amber-500 focus:border-amber-500"
+                >
+                  <option value="">Walk-in Customer</option>
+                  {customers.map(customer => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name} {customer.phone ? `(${customer.phone})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setShowCustomerForm(true)}
+                  className="bg-amber-600 text-white p-1.5 rounded-md hover:bg-amber-700"
+                  title="Add new customer"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Screen</label>
+              <select
+                value={selectedScreen || ''}
+                onChange={(e) => setSelectedScreen(e.target.value || null)}
+                className="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-amber-500 focus:border-amber-500"
+              >
+                <option value="">Select Screen</option>
+                {screens.map(screen => (
+                  <option key={screen.id} value={screen.id}>
+                    {screen.name} {screen.capacity ? `(${screen.capacity} seats)` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -188,11 +270,15 @@ export function POSInterface() {
       {showPaymentModal && (
         <PaymentModal
           total={total}
+          customerId={selectedCustomer}
+          screenId={selectedScreen}
           onClose={() => {
             setShowPaymentModal(false);
           }}
           onSuccess={async (order) => {
             setLastOrder(order);
+            setSelectedCustomer(null);
+            setSelectedScreen(null);
             const settings = await apiClient.getSettings();
             const autoPrint = settings.find((s: any) => s.key === 'auto_print')?.value === 'true';
 
@@ -205,6 +291,63 @@ export function POSInterface() {
             }
           }}
         />
+      )}
+
+      {/* Quick Add Customer Modal */}
+      {showCustomerForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Customer</h3>
+            <form onSubmit={handleCreateCustomer} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name *</label>
+                <input
+                  type="text"
+                  value={customerFormData.name}
+                  onChange={(e) => setCustomerFormData({ ...customerFormData, name: e.target.value })}
+                  required
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-amber-500 focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Phone</label>
+                <input
+                  type="tel"
+                  value={customerFormData.phone}
+                  onChange={(e) => setCustomerFormData({ ...customerFormData, phone: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-amber-500 focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                  type="email"
+                  value={customerFormData.email}
+                  onChange={(e) => setCustomerFormData({ ...customerFormData, email: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-amber-500 focus:border-amber-500"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCustomerForm(false)}
+                  className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-md bg-amber-600 text-white hover:bg-amber-700"
+                >
+                  Add Customer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

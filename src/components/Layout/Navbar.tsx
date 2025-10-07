@@ -16,6 +16,7 @@ export function Navbar() {
     { path: '/pos', label: 'POS', permission: { resource: 'pos', action: 'read' } },
     { path: '/orders', label: 'Orders', permission: { resource: 'orders', action: 'read' } },
     { path: '/menu', label: 'Menu', permission: { resource: 'menu', action: 'read' } },
+    { path: '/customers', label: 'Customers', permission: { resource: 'customers', action: 'read' } },
     { path: '/reports', label: 'Reports', permission: { resource: 'reports', action: 'read' } },
     { path: '/settings', label: 'Settings', permission: { resource: 'settings', action: 'read' } },
   ];

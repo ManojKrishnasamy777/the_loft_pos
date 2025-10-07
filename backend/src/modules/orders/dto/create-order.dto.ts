@@ -37,6 +37,16 @@ export class CreateOrderDto {
   @IsString()
   customerPhone?: string;
 
+  @ApiProperty({ example: 'uuid-of-customer', required: false })
+  @IsOptional()
+  @IsUUID()
+  customerId?: string;
+
+  @ApiProperty({ example: 'uuid-of-screen', required: false })
+  @IsOptional()
+  @IsUUID()
+  screenId?: string;
+
   @ApiProperty({ enum: PaymentMethod, example: PaymentMethod.CASH })
   @IsEnum(PaymentMethod)
   paymentMethod: PaymentMethod;

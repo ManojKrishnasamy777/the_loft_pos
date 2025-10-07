@@ -11,6 +11,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { databaseConfig } from './config/database.config';
 import { ScreensModule } from './modules/screens/screens.module';
+import { CustomersModule } from './modules/customers/customers.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ScreensModule } from './modules/screens/screens.module';
     ReportsModule,
     SettingsModule,
     ScreensModule,
+    CustomersModule,
     AuditModule,
   ],
 })

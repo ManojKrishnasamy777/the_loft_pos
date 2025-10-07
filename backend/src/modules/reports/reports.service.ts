@@ -29,7 +29,9 @@ export class ReportsService {
     const queryBuilder = this.orderRepository.createQueryBuilder('order')
       .leftJoinAndSelect('order.items', 'items')
       .leftJoinAndSelect('items.menuItem', 'menuItem')
-      .leftJoinAndSelect('menuItem.category', 'category');
+      .leftJoinAndSelect('menuItem.category', 'category')
+      .leftJoinAndSelect('order.customer', 'customer')
+      .leftJoinAndSelect('order.screen', 'screen');
 
     // Apply filters
     if (dateFrom && dateTo) {
@@ -228,8 +230,10 @@ export class ReportsService {
     const { dateFrom, dateTo } = filterDto;
 
     const queryBuilder = this.orderRepository.createQueryBuilder('order')
+      .leftJoinAndSelect('order.customer', 'customer')
+      .leftJoinAndSelect('order.screen', 'screen')
       .where('order.status = :status', { status: OrderStatus.COMPLETED })
-      .andWhere('order.customerEmail IS NOT NULL');
+      .andWhere('(order.customerEmail IS NOT NULL OR order.customerId IS NOT NULL)');
 
     if (dateFrom && dateTo) {
       queryBuilder.andWhere('order.createdAt BETWEEN :dateFrom AND :dateTo', {
@@ -243,7 +247,7 @@ export class ReportsService {
     // Group by customer
     const customerAnalytics = new Map();
     orders.forEach(order => {
-      const key = order.customerEmail;
+      const key = order.customerId || order.customerEmail || 'walk-in';
       if (customerAnalytics.has(key)) {
         const existing = customerAnalytics.get(key);
         existing.totalSpent += parseFloat(order.total.toString());
@@ -251,8 +255,10 @@ export class ReportsService {
         existing.lastOrderDate = order.createdAt > existing.lastOrderDate ? order.createdAt : existing.lastOrderDate;
       } else {
         customerAnalytics.set(key, {
+          customerId: order.customerId,
           customerEmail: order.customerEmail,
-          customerName: order.customerName,
+          customerName: order.customer?.name || order.customerName,
+          customerPhone: order.customer?.phone,
           totalSpent: parseFloat(order.total.toString()),
           orderCount: 1,
           firstOrderDate: order.createdAt,

@@ -40,6 +40,30 @@ export interface Category {
   sortOrder: number;
 }
 
+export interface Customer {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  totalSpent: number;
+  orderCount: number;
+  isActive: boolean;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Screen {
+  id: string;
+  name: string;
+  capacity?: number;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -49,6 +73,8 @@ export interface Order {
   total: number;
   customerEmail?: string;
   customerName?: string;
+  customer?: Customer;
+  screen?: Screen;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
   createdBy: User;
