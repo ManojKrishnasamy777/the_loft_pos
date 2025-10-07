@@ -7,7 +7,8 @@ import {
   Users,
   Shield,
   Bell,
-  Database
+  Database,
+  Monitor
 } from 'lucide-react';
 import { PaymentSettings } from './PaymentSettings';
 import { PrinterSettings } from './PrinterSettings';
@@ -16,15 +17,16 @@ import { UserManagement } from './UserManagement';
 import { SecuritySettings } from './SecuritySettings';
 import { NotificationSettings } from './NotificationSettings';
 import { BackupSettings } from './BackupSettings';
+import { ScreenManagement } from '../Screens/screens';
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState('payment');
 
   const tabs = [
     { id: 'payment', name: 'Payment Gateway', icon: CreditCard },
-    { id: 'printer', name: 'Printer Config', icon: Printer },
     { id: 'tax', name: 'Tax Settings', icon: Calculator },
     { id: 'users', name: 'User Management', icon: Users },
+    { id: 'screen', name: 'Screens', icon: Monitor }, // Use a valid icon, e.g., Monitor
     { id: 'security', name: 'Security', icon: Shield },
     { id: 'notifications', name: 'Notifications', icon: Bell },
     { id: 'backup', name: 'Backup & Restore', icon: Database }
@@ -40,6 +42,8 @@ export function SettingsPage() {
         return <TaxSettings />;
       case 'users':
         return <UserManagement />;
+      case 'screen':
+        return <ScreenManagement />;
       case 'security':
         return <SecuritySettings />;
       case 'notifications':
@@ -76,11 +80,10 @@ export function SettingsPage() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md text-left transition-colors ${
-                        activeTab === tab.id
-                          ? 'bg-amber-100 text-amber-700 border-r-2 border-amber-600'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
+                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md text-left transition-colors ${activeTab === tab.id
+                        ? 'bg-amber-100 text-amber-700 border-r-2 border-amber-600'
+                        : 'text-gray-700 hover:bg-gray-100'
+                        }`}
                     >
                       <Icon className="h-4 w-4" />
                       <span className="text-sm font-medium">{tab.name}</span>

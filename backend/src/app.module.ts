@@ -10,6 +10,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { databaseConfig } from './config/database.config';
+import { ScreensModule } from './modules/screens/screens.module';
 
 @Module({
   imports: [
@@ -25,7 +26,8 @@ import { databaseConfig } from './config/database.config';
     PaymentsModule,
     ReportsModule,
     SettingsModule,
+    ScreensModule,
     AuditModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

@@ -24,7 +24,7 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -41,14 +41,14 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         if (response.status === 401) {
           this.clearToken();
           window.location.href = '/login';
           throw new Error('Unauthorized');
         }
-        
+
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP ${response.status}`);
       }
@@ -57,7 +57,7 @@ class ApiClient {
       if (contentType && contentType.includes('application/json')) {
         return response.json();
       }
-      
+
       return response.text() as unknown as T;
     } catch (error) {
       console.error('API request failed:', error);
@@ -71,7 +71,7 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    
+
     this.setToken(response.access_token);
     return response;
   }
@@ -128,7 +128,7 @@ class ApiClient {
     const params = new URLSearchParams();
     if (dateFrom) params.append('dateFrom', dateFrom);
     if (dateTo) params.append('dateTo', dateTo);
-    
+
     return this.request<any>(`/orders/stats?${params.toString()}`);
   }
 
@@ -178,11 +178,11 @@ class ApiClient {
         Authorization: `Bearer ${this.token}`,
       },
     });
-    
+
     if (!response.ok) {
       throw new Error('Export failed');
     }
-    
+
     return response.blob();
   }
 
@@ -221,6 +221,39 @@ class ApiClient {
     });
   }
 
+  // ----------------------------
+  // Screens endpoints
+  // ----------------------------
+
+  async getScreens() {
+    return this.request<any[]>('/screens');
+  }
+
+  async getScreenById(id: string) {
+    return this.request<any>(`/screens/${id}`);
+  }
+
+  async createScreen(data: any) {
+    return this.request<any>('/screens', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateScreen(id: string, data: any) {
+    return this.request<any>(`/screens/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteScreen(id: string) {
+    return this.request<any>(`/screens/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+
   // Audit endpoints
   async getAuditLogs(params?: any) {
     const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
@@ -231,7 +264,7 @@ class ApiClient {
     const params = new URLSearchParams();
     if (dateFrom) params.append('dateFrom', dateFrom);
     if (dateTo) params.append('dateTo', dateTo);
-    
+
     return this.request<any>(`/audit/stats?${params.toString()}`);
   }
 }

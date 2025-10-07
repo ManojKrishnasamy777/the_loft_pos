@@ -29,7 +29,8 @@ export class PrintService {
       this.downloadReceipt(order, settings, options);
       return;
     }
-
+    // eslint-disable-next-line no-debugger
+    debugger;
     const receiptHtml = this.generateReceiptHtml(order, settings, options);
 
     const printWindow = window.open('', '_blank');
@@ -51,6 +52,7 @@ export class PrintService {
     const companyName = settings.company_name || 'The Loft Coimbatore';
     const companyAddress = settings.company_address || 'Coimbatore, Tamil Nadu';
     const companyPhone = settings.company_phone || '';
+    const companyEmail = settings.company_email || '';
     const taxRate = parseFloat(settings.tax_rate || '0.18') * 100;
     const currencySymbol = settings.currency_symbol || '₹';
     const receiptFooter = settings.receipt_footer || 'Thank you for your visit!';
@@ -151,6 +153,7 @@ export class PrintService {
           <div class="company-name">${companyName}</div>
           <div class="company-details">${companyAddress}</div>
           ${companyPhone ? `<div class="company-details">Tel: ${companyPhone}</div>` : ''}
+          ${companyEmail ? `<div class="company-details">Email: ${companyEmail}</div>` : ''}
           ${options.showGst && settings.company_gst ? `<div class="company-details">GSTIN: ${settings.company_gst}</div>` : ''}
         </div>
 
@@ -158,7 +161,7 @@ export class PrintService {
           <div><strong>Order #:</strong> ${order.orderNumber || order.order_number}</div>
           ${order.customerName || order.customer_name ? `<div><strong>Customer:</strong> ${order.customerName || order.customer_name}</div>` : ''}
           <div><strong>Date:</strong> ${new Date(order.createdAt || order.created_at || Date.now()).toLocaleString()}</div>
-          ${order.createdBy ? `<div><strong>Cashier:</strong> ${order.createdBy}</div>` : ''}
+          ${order.createdBy ? `<div><strong>Cashier:</strong> ${order.createdBy.name}</div>` : ''}
         </div>
 
         <div class="items-table">
@@ -171,7 +174,7 @@ export class PrintService {
             <div class="item-row">
               <div class="item-name">${item.menuItem?.name || item.name || 'Item'}</div>
               <div class="item-qty">${item.quantity}</div>
-              <div class="item-price">${currencySymbol}${(item.totalPrice || item.total_price || 0).toFixed(2)}</div>
+              <div class="item-price">${currencySymbol}${Number(item.subtotal || item.total_price || 0).toFixed(2)}</div>
             </div>
           `).join('')}
         </div>
@@ -179,23 +182,23 @@ export class PrintService {
         <div class="totals">
           <div class="total-row">
             <div>Subtotal:</div>
-            <div>${currencySymbol}${(order.subtotal || 0).toFixed(2)}</div>
+            <div>${currencySymbol}${Number(order.subtotal || 0).toFixed(2)}</div>
           </div>
           ${options.showGst ? `
             <div class="total-row">
               <div>GST (${taxRate}%):</div>
-              <div>${currencySymbol}${(order.taxAmount || order.tax_amount || 0).toFixed(2)}</div>
+              <div>${currencySymbol}${Number(order.taxAmount || order.tax_amount || 0).toFixed(2)}</div>
             </div>
           ` : ''}
           ${order.discountAmount && order.discountAmount > 0 ? `
             <div class="total-row">
               <div>Discount:</div>
-              <div>-${currencySymbol}${(order.discountAmount || order.discount_amount || 0).toFixed(2)}</div>
+              <div>-${currencySymbol}${Number(order.discountAmount || order.discount_amount || 0).toFixed(2)}</div>
             </div>
           ` : ''}
           <div class="total-row grand-total">
             <div>TOTAL:</div>
-            <div>${currencySymbol}${(order.total || 0).toFixed(2)}</div>
+            <div>${currencySymbol}${Number(order.total || 0).toFixed(2)}</div>
           </div>
         </div>
 
