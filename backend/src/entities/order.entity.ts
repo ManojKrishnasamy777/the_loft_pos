@@ -13,7 +13,7 @@ import { Customer } from './customer.entity';
 import { OrderItem } from './order-item.entity';
 import { Payment } from './payment.entity';
 import { PaymentMethod } from '../Enum/paymentmethodEnum';
-import { Screen } from './screens.entity';
+import { Screens } from './screens.entity';
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -60,9 +60,9 @@ export class Order {
   @Column({ name: 'screen_id', nullable: true })
   screenId: string;
 
-  @ManyToOne(() => Screen, { nullable: true })
+  @ManyToOne(() => Screens, { nullable: true })
   @JoinColumn({ name: 'screen_id' })
-  screen: Screen;
+  screen: Screens;
 
   @Column({
     type: 'enum',

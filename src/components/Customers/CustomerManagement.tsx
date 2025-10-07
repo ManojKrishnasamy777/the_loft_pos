@@ -117,11 +117,10 @@ export function CustomerManagement() {
                         <div>
                           <h3 className="font-semibold text-gray-900">{customer.name}</h3>
                           <span
-                            className={`text-xs px-2 py-0.5 rounded-full ${
-                              customer.isActive
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
+                            className={`text-xs px-2 py-0.5 rounded-full ${customer.isActive
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                              }`}
                           >
                             {customer.isActive ? 'Active' : 'Inactive'}
                           </span>
@@ -172,7 +171,7 @@ export function CustomerManagement() {
                       <div>
                         <span className="text-gray-500">Spent: </span>
                         <span className="font-semibold text-gray-900">
-                          ₹{customer.totalSpent.toFixed(2)}
+                          ₹{Number(customer.totalSpent).toFixed(2)}
                         </span>
                       </div>
                     </div>

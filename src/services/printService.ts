@@ -21,6 +21,7 @@ export class PrintService {
   }
 
   static async printReceipt(order: any, options: PrintOptions = {}) {
+    debugger
     const settings = await this.getSettings();
     const printerEnabled = settings.printer_enabled === 'true';
 
@@ -159,9 +160,9 @@ export class PrintService {
 
         <div class="order-info">
           <div><strong>Order #:</strong> ${order.orderNumber || order.order_number}</div>
-          ${order.customerName || order.customer_name ? `<div><strong>Customer:</strong> ${order.customerName || order.customer_name}</div>` : ''}
+          ${order.customer.name || order.customer_name ? `<div><strong>Customer:</strong> ${order.customer.name || order.customer_name}</div>` : ''}
           <div><strong>Date:</strong> ${new Date(order.createdAt || order.created_at || Date.now()).toLocaleString()}</div>
-          ${order.createdBy ? `<div><strong>Cashier:</strong> ${order.createdBy.name}</div>` : ''}
+          ${order.screen ? `<div><strong>Screen:</strong> ${order.screen.name}</div>` : ''}
         </div>
 
         <div class="items-table">
