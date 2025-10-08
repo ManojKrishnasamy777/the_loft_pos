@@ -12,6 +12,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { databaseConfig } from './config/database.config';
 import { ScreensModule } from './modules/screens/screens.module';
 import { CustomersModule } from './modules/customers/customers.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { CustomersModule } from './modules/customers/customers.module';
     ScreensModule,
     CustomersModule,
     AuditModule,
+    EmailModule,
   ],
 })
 export class AppModule { }

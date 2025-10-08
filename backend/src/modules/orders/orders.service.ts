@@ -8,6 +8,7 @@ import { Customer } from '../../entities/customer.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderFilterDto } from './dto/order-filter.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class OrdersService {
@@ -20,6 +21,7 @@ export class OrdersService {
     private menuItemRepository: Repository<MenuItem>,
     @InjectRepository(Customer)
     private customerRepository: Repository<Customer>,
+    private emailService: EmailService,
   ) { }
 
   async findAll(filterDto?: OrderFilterDto): Promise<{ orders: Order[]; total: number }> {
@@ -148,7 +150,17 @@ export class OrdersService {
       );
     }
 
-    return this.findById(savedOrder.id);
+    const finalOrder = await this.findById(savedOrder.id);
+
+    if (finalOrder.customerEmail) {
+      try {
+        await this.sendOrderConfirmationEmail(finalOrder);
+      } catch (error) {
+        console.error('Failed to send order confirmation email:', error);
+      }
+    }
+
+    return finalOrder;
   }
 
   async update(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
@@ -208,6 +220,28 @@ export class OrdersService {
       averageOrderValue:
         completedOrders > 0 ? parseFloat(totalRevenue?.total || '0') / completedOrders : 0,
     };
+  }
+
+  private async sendOrderConfirmationEmail(order: Order): Promise<void> {
+    try {
+      const orderData = {
+        orderNumber: order.orderNumber,
+        customerName: order.customerName || 'Customer',
+        total: order.total,
+        items: order.items.map(item => ({
+          name: item.menuItem.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        paymentMethod: order.paymentMethod,
+        createdAt: order.createdAt,
+      };
+
+      await this.emailService.sendOrderConfirmation(orderData, order.customerEmail);
+    } catch (error) {
+      console.error('Error sending order confirmation email:', error);
+      throw error;
+    }
   }
 
   private async generateOrderNumber(): Promise<string> {

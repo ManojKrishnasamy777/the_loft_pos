@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Save, Mail, Upload, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, Mail, Upload, AlertCircle, CheckCircle } from 'lucide-react';
 import type { EmailConfig } from '../../types';
+import apiClient from '../../config/api';
 
 export default function EmailSettings() {
-  const [emailConfig, setEmailConfig] = useState<EmailConfig>({
-    id: '1',
+  const [emailConfig, setEmailConfig] = useState<EmailConfig | null>(null);
+  const [formData, setFormData] = useState({
     smtpHost: 'smtp.gmail.com',
     smtpPort: 587,
     smtpUser: '',
@@ -13,13 +14,43 @@ export default function EmailSettings() {
     fromName: 'Restaurant POS',
     logoUrl: '',
     isEnabled: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [error, setError] = useState<string>('');
+
+  useEffect(() => {
+    loadEmailConfig();
+  }, []);
+
+  const loadEmailConfig = async () => {
+    try {
+      const configs = await apiClient.getEmailConfigs();
+      if (configs && configs.length > 0) {
+        const config = configs[0];
+        setEmailConfig(config);
+        setFormData({
+          smtpHost: config.smtpHost,
+          smtpPort: config.smtpPort,
+          smtpUser: config.smtpUser,
+          smtpPassword: config.smtpPassword,
+          fromEmail: config.fromEmail,
+          fromName: config.fromName,
+          logoUrl: config.logoUrl || '',
+          isEnabled: config.isEnabled,
+        });
+        if (config.logoUrl) {
+          setLogoPreview(config.logoUrl);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load email configuration:', err);
+    }
+  };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -28,7 +59,7 @@ export default function EmailSettings() {
       reader.onloadend = () => {
         const result = reader.result as string;
         setLogoPreview(result);
-        setEmailConfig({ ...emailConfig, logoUrl: result });
+        setFormData({ ...formData, logoUrl: result });
       };
       reader.readAsDataURL(file);
     }
@@ -36,34 +67,50 @@ export default function EmailSettings() {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setError('');
+    setTestResult(null);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      localStorage.setItem('emailConfig', JSON.stringify(emailConfig));
+      if (emailConfig) {
+        await apiClient.updateEmailConfig(emailConfig.id, formData);
+      } else {
+        const created = await apiClient.createEmailConfig(formData);
+        setEmailConfig(created);
+      }
+
+      await loadEmailConfig();
 
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    } catch (error) {
-      console.error('Failed to save email configuration:', error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save email configuration');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleTestEmail = async () => {
-    alert('Test email functionality will be implemented with backend integration');
-  };
-
-  React.useEffect(() => {
-    const saved = localStorage.getItem('emailConfig');
-    if (saved) {
-      const config = JSON.parse(saved);
-      setEmailConfig(config);
-      if (config.logoUrl) {
-        setLogoPreview(config.logoUrl);
-      }
+    if (!emailConfig) {
+      setError('Please save the configuration first');
+      return;
     }
-  }, []);
+
+    setIsTesting(true);
+    setTestResult(null);
+    setError('');
+
+    try {
+      const result = await apiClient.testEmailConnection(emailConfig.id);
+      setTestResult(result);
+    } catch (err) {
+      setTestResult({
+        success: false,
+        message: err instanceof Error ? err.message : 'Failed to test email connection',
+      });
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -76,8 +123,34 @@ export default function EmailSettings() {
 
       {showSuccess && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <CheckCircle className="w-5 h-5 text-green-600" />
           <p className="text-green-800 font-medium">Email configuration saved successfully!</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600" />
+          <p className="text-red-800">{error}</p>
+        </div>
+      )}
+
+      {testResult && (
+        <div
+          className={`border rounded-lg p-4 flex items-center gap-3 ${
+            testResult.success
+              ? 'bg-green-50 border-green-200'
+              : 'bg-red-50 border-red-200'
+          }`}
+        >
+          {testResult.success ? (
+            <CheckCircle className="w-5 h-5 text-green-600" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-600" />
+          )}
+          <p className={testResult.success ? 'text-green-800' : 'text-red-800'}>
+            {testResult.message}
+          </p>
         </div>
       )}
 
@@ -90,13 +163,13 @@ export default function EmailSettings() {
           <label className="flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={emailConfig.isEnabled}
-              onChange={(e) => setEmailConfig({ ...emailConfig, isEnabled: e.target.checked })}
+              checked={formData.isEnabled}
+              onChange={(e) => setFormData({ ...formData, isEnabled: e.target.checked })}
               className="sr-only peer"
             />
             <div className="relative w-11 h-6 bg-gray-300 peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
             <span className="ml-3 text-sm font-medium text-gray-900">
-              {emailConfig.isEnabled ? 'Enabled' : 'Disabled'}
+              {formData.isEnabled ? 'Enabled' : 'Disabled'}
             </span>
           </label>
         </div>
@@ -116,8 +189,8 @@ export default function EmailSettings() {
             </label>
             <input
               type="text"
-              value={emailConfig.smtpHost}
-              onChange={(e) => setEmailConfig({ ...emailConfig, smtpHost: e.target.value })}
+              value={formData.smtpHost}
+              onChange={(e) => setFormData({ ...formData, smtpHost: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               placeholder="smtp.gmail.com"
             />
@@ -129,8 +202,8 @@ export default function EmailSettings() {
             </label>
             <input
               type="number"
-              value={emailConfig.smtpPort}
-              onChange={(e) => setEmailConfig({ ...emailConfig, smtpPort: parseInt(e.target.value) })}
+              value={formData.smtpPort}
+              onChange={(e) => setFormData({ ...formData, smtpPort: parseInt(e.target.value) })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               placeholder="587"
             />
@@ -142,8 +215,8 @@ export default function EmailSettings() {
             </label>
             <input
               type="text"
-              value={emailConfig.smtpUser}
-              onChange={(e) => setEmailConfig({ ...emailConfig, smtpUser: e.target.value })}
+              value={formData.smtpUser}
+              onChange={(e) => setFormData({ ...formData, smtpUser: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               placeholder="your-email@gmail.com"
             />
@@ -155,8 +228,8 @@ export default function EmailSettings() {
             </label>
             <input
               type="password"
-              value={emailConfig.smtpPassword}
-              onChange={(e) => setEmailConfig({ ...emailConfig, smtpPassword: e.target.value })}
+              value={formData.smtpPassword}
+              onChange={(e) => setFormData({ ...formData, smtpPassword: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               placeholder="App Password or SMTP password"
             />
@@ -168,8 +241,8 @@ export default function EmailSettings() {
             </label>
             <input
               type="email"
-              value={emailConfig.fromEmail}
-              onChange={(e) => setEmailConfig({ ...emailConfig, fromEmail: e.target.value })}
+              value={formData.fromEmail}
+              onChange={(e) => setFormData({ ...formData, fromEmail: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               placeholder="noreply@yourrestaurant.com"
             />
@@ -181,8 +254,8 @@ export default function EmailSettings() {
             </label>
             <input
               type="text"
-              value={emailConfig.fromName}
-              onChange={(e) => setEmailConfig({ ...emailConfig, fromName: e.target.value })}
+              value={formData.fromName}
+              onChange={(e) => setFormData({ ...formData, fromName: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               placeholder="Restaurant POS"
             />
@@ -240,11 +313,11 @@ export default function EmailSettings() {
           </button>
           <button
             onClick={handleTestEmail}
-            disabled={!emailConfig.isEnabled || isSaving}
+            disabled={!emailConfig || !formData.isEnabled || isTesting}
             className="flex items-center gap-2 px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
           >
             <Mail className="w-4 h-4" />
-            Send Test Email
+            {isTesting ? 'Testing...' : 'Test Connection'}
           </button>
         </div>
       </div>

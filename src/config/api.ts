@@ -297,6 +297,52 @@ class ApiClient {
 
     return this.request<any>(`/audit/stats?${params.toString()}`);
   }
+
+  // Email endpoints
+  async getEmailConfigs() {
+    return this.request<any[]>('/email/config');
+  }
+
+  async getActiveEmailConfig() {
+    return this.request<any>('/email/config/active');
+  }
+
+  async getEmailConfigById(id: string) {
+    return this.request<any>(`/email/config/${id}`);
+  }
+
+  async createEmailConfig(data: any) {
+    return this.request<any>('/email/config', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateEmailConfig(id: string, data: any) {
+    return this.request<any>(`/email/config/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteEmailConfig(id: string) {
+    return this.request<any>(`/email/config/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async testEmailConnection(id: string) {
+    return this.request<any>(`/email/test/${id}`, {
+      method: 'POST',
+    });
+  }
+
+  async sendOrderConfirmationEmail(orderData: any, customerEmail: string) {
+    return this.request<any>('/email/send-order-confirmation', {
+      method: 'POST',
+      body: JSON.stringify({ orderData, customerEmail }),
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
