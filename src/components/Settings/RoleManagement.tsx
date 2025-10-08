@@ -6,10 +6,10 @@ interface Role {
   id: string;
   name: string;
   description?: string;
-  is_active: boolean;
+  isActive: boolean;
   permissions?: Permission[];
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Permission {
@@ -18,8 +18,8 @@ interface Permission {
   resource: string;
   action: string;
   description?: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function RoleManagement() {
@@ -52,7 +52,7 @@ export function RoleManagement() {
 
   const handleAddRole = async (roleData: { name: string; description: string }) => {
     try {
-      await apiClient.createRole({ ...roleData, is_active: true });
+      await apiClient.createRole({ ...roleData, isActive: true });
       await loadData();
       setShowAddModal(false);
     } catch (error) {
@@ -131,8 +131,8 @@ export function RoleManagement() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{role.name}</h3>
-                    <span className={`text-xs px-2 py-1 rounded-full ${role.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                      {role.is_active ? 'Active' : 'Inactive'}
+                    <span className={`text-xs px-2 py-1 rounded-full ${role.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                      {role.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
                 </div>

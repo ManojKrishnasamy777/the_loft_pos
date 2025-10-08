@@ -5,10 +5,10 @@ interface Role {
   id: string;
   name: string;
   description?: string;
-  is_active: boolean;
+  isActive: boolean;
   permissions?: any[];
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface AddUserModalProps {
@@ -18,8 +18,8 @@ interface AddUserModalProps {
     name: string;
     email: string;
     password: string;
-    role_id: string;
-    is_active: boolean;
+    roleId: string;
+    isActive: boolean;
   }) => Promise<void>;
   roles: Role[];
 }
@@ -30,8 +30,8 @@ export function AddUserModal({ isOpen, onClose, onSubmit, roles }: AddUserModalP
     email: '',
     password: '',
     confirmPassword: '',
-    role_id: '',
-    is_active: true
+    roleId: '',
+    isActive: true
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -45,8 +45,8 @@ export function AddUserModal({ isOpen, onClose, onSubmit, roles }: AddUserModalP
         email: '',
         password: '',
         confirmPassword: '',
-        role_id: roles[0]?.id || '',
-        is_active: true
+        roleId: roles[0]?.id || '',
+        isActive: true
       });
       setErrors({});
       setShowPassword(false);
@@ -77,8 +77,8 @@ export function AddUserModal({ isOpen, onClose, onSubmit, roles }: AddUserModalP
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
-    if (!formData.role_id) {
-      newErrors.role_id = 'Role is required';
+    if (!formData.roleId) {
+      newErrors.roleId = 'Role is required';
     }
 
     setErrors(newErrors);
@@ -98,8 +98,8 @@ export function AddUserModal({ isOpen, onClose, onSubmit, roles }: AddUserModalP
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
-        role_id: formData.role_id,
-        is_active: formData.is_active
+        roleId: formData.roleId,
+        isActive: formData.isActive
       });
       onClose();
     } catch (error) {
@@ -212,31 +212,31 @@ export function AddUserModal({ isOpen, onClose, onSubmit, roles }: AddUserModalP
               Role *
             </label>
             <select
-              value={formData.role_id}
-              onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
+              value={formData.roleId}
+              onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                errors.role_id ? 'border-red-500' : 'border-gray-300'
+                errors.roleId ? 'border-red-500' : 'border-gray-300'
               }`}
             >
               <option value="">Select a role</option>
-              {roles.filter(role => role.is_active).map((role) => (
+              {roles.filter(role => role.isActive).map((role) => (
                 <option key={role.id} value={role.id}>
                   {role.name}
                 </option>
               ))}
             </select>
-            {errors.role_id && <p className="text-red-500 text-xs mt-1">{errors.role_id}</p>}
+            {errors.roleId && <p className="text-red-500 text-xs mt-1">{errors.roleId}</p>}
           </div>
 
           <div className="flex items-center">
             <input
               type="checkbox"
-              id="is_active"
-              checked={formData.is_active}
-              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              id="isActive"
+              checked={formData.isActive}
+              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
               className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
             />
-            <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
+            <label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
               Active user account
             </label>
           </div>

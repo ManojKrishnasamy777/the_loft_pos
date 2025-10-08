@@ -9,21 +9,21 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role_id: string;
+  roleId: string;
   role?: Role;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Role {
   id: string;
   name: string;
   description?: string;
-  is_active: boolean;
+  isActive: boolean;
   permissions?: any[];
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function UserManagement() {
@@ -145,8 +145,8 @@ export function UserManagement() {
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {user.is_active ? 'Active' : 'Inactive'}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {user.isActive ? 'Active' : 'Inactive'}
                   </span>
                   <button
                     onClick={() => openEditModal(user)}

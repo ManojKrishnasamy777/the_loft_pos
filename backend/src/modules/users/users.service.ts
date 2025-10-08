@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User } from '../../entities/user.entity';
 import { Role } from '../../entities/role.entity';
+import { Permission } from '../../entities/permission.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -14,6 +15,8 @@ export class UsersService {
     private usersRepository: Repository<User>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    @InjectRepository(Permission)
+    private permissionsRepository: Repository<Permission>,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -116,5 +119,92 @@ export class UsersService {
     const user = await this.findById(id);
     await this.usersRepository.update(id, { isActive: !user.isActive });
     return this.findById(id);
+  }
+
+  async findAllRoles(): Promise<Role[]> {
+    return this.rolesRepository.find({
+      relations: ['permissions'],
+      order: { createdAt: 'ASC' },
+    });
+  }
+
+  async findRoleById(id: string): Promise<Role> {
+    const role = await this.rolesRepository.findOne({
+      where: { id },
+      relations: ['permissions'],
+    });
+
+    if (!role) {
+      throw new NotFoundException('Role not found');
+    }
+
+    return role;
+  }
+
+  async createRole(data: { name: string; description?: string; isActive: boolean }): Promise<Role> {
+    const existingRole = await this.rolesRepository.findOne({
+      where: { name: data.name },
+    });
+
+    if (existingRole) {
+      throw new ConflictException('Role with this name already exists');
+    }
+
+    const role = this.rolesRepository.create(data);
+    return this.rolesRepository.save(role);
+  }
+
+  async updateRole(id: string, data: { name?: string; description?: string; isActive?: boolean }): Promise<Role> {
+    const role = await this.findRoleById(id);
+
+    if (data.name && data.name !== role.name) {
+      const existingRole = await this.rolesRepository.findOne({
+        where: { name: data.name },
+      });
+
+      if (existingRole) {
+        throw new ConflictException('Role with this name already exists');
+      }
+    }
+
+    await this.rolesRepository.update(id, data);
+    return this.findRoleById(id);
+  }
+
+  async deleteRole(id: string): Promise<void> {
+    const role = await this.findRoleById(id);
+
+    const usersWithRole = await this.usersRepository.count({
+      where: { roleId: id },
+    });
+
+    if (usersWithRole > 0) {
+      throw new ConflictException('Cannot delete role that is assigned to users');
+    }
+
+    await this.rolesRepository.remove(role);
+  }
+
+  async findAllPermissions(): Promise<Permission[]> {
+    return this.permissionsRepository.find({
+      order: { resource: 'ASC', action: 'ASC' },
+    });
+  }
+
+  async assignPermissionsToRole(roleId: string, permissionIds: string[]): Promise<Role> {
+    const role = await this.findRoleById(roleId);
+
+    const permissions = await this.permissionsRepository.find({
+      where: { id: In(permissionIds) },
+    });
+
+    if (permissions.length !== permissionIds.length) {
+      throw new NotFoundException('Some permissions were not found');
+    }
+
+    role.permissions = permissions;
+    await this.rolesRepository.save(role);
+
+    return this.findRoleById(roleId);
   }
 }
