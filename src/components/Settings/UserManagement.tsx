@@ -1,33 +1,80 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../../config/api';
-import { Plus, CreditCard as Edit, Trash2, UserPlus, Shield, Mail } from 'lucide-react';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  isActive: boolean;
-  createdAt: string;
-}
+import { Edit, Trash2, UserPlus, Shield, Mail } from 'lucide-react';
+import { userService, roleService, User, Role } from '../../services/supabaseClient';
+import { AddUserModal } from './AddUserModal';
+import { EditUserModal } from './EditUserModal';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
 
 export function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
-    loadUsers();
+    loadData();
   }, []);
 
-  const loadUsers = async () => {
+  const loadData = async () => {
     try {
-      const data = await apiClient.getUsers();
-      setUsers(data);
+      setLoading(true);
+      const [usersData, rolesData] = await Promise.all([
+        userService.getAll(),
+        roleService.getAll()
+      ]);
+      setUsers(usersData);
+      setRoles(rolesData);
     } catch (error) {
-      console.error('Failed to load users:', error);
+      console.error('Failed to load data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddUser = async (userData: any) => {
+    try {
+      await userService.create(userData);
+      await loadData();
+      setShowAddModal(false);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleEditUser = async (userId: string, userData: any) => {
+    try {
+      await userService.update(userId, userData);
+      await loadData();
+      setShowEditModal(false);
+      setSelectedUser(null);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    try {
+      await userService.delete(selectedUser.id);
+      await loadData();
+      setShowDeleteModal(false);
+      setSelectedUser(null);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setShowEditModal(true);
+  };
+
+  const openDeleteModal = (user: User) => {
+    setSelectedUser(user);
+    setShowDeleteModal(true);
   };
 
   return (
@@ -38,7 +85,10 @@ export function UserManagement() {
             <h2 className="text-xl font-bold text-gray-900">User Management</h2>
             <p className="text-sm text-gray-600 mt-1">Manage staff access and permissions</p>
           </div>
-          <button className="flex items-center space-x-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center space-x-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors"
+          >
             <UserPlus className="h-4 w-4" />
             <span>Add User</span>
           </button>
@@ -68,19 +118,27 @@ export function UserManagement() {
                       </div>
                       <div className="flex items-center">
                         <Shield className="h-3 w-3 mr-1" />
-                        <span className="capitalize">{user.role}</span>
+                        <span className="capitalize">{user.role?.name || 'No Role'}</span>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {user.isActive ? 'Active' : 'Inactive'}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {user.is_active ? 'Active' : 'Inactive'}
                   </span>
-                  <button className="p-2 text-blue-600 hover:text-blue-800">
+                  <button
+                    onClick={() => openEditModal(user)}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Edit user"
+                  >
                     <Edit className="h-4 w-4" />
                   </button>
-                  <button className="p-2 text-red-600 hover:text-red-800">
+                  <button
+                    onClick={() => openDeleteModal(user)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete user"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -96,6 +154,36 @@ export function UserManagement() {
           )}
         </div>
       )}
+
+      <AddUserModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddUser}
+        roles={roles}
+      />
+
+      <EditUserModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedUser(null);
+        }}
+        onSubmit={handleEditUser}
+        user={selectedUser}
+        roles={roles}
+      />
+
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedUser(null);
+        }}
+        onConfirm={handleDeleteUser}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This will remove all their data and cannot be undone."
+        itemName={selectedUser?.name}
+      />
     </div>
   );
 }

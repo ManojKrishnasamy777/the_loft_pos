@@ -9,7 +9,8 @@ import {
   Bell,
   Database,
   Monitor,
-  Mail
+  Mail,
+  Key
 } from 'lucide-react';
 import { PaymentSettings } from './PaymentSettings';
 import { PrinterSettings } from './PrinterSettings';
@@ -20,6 +21,8 @@ import { NotificationSettings } from './NotificationSettings';
 import { BackupSettings } from './BackupSettings';
 import { ScreenManagement } from '../Screens/screens';
 import EmailSettings from './EmailSettings';
+import { RoleManagement } from './RoleManagement';
+import { PermissionManagement } from './PermissionManagement';
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState('payment');
@@ -28,6 +31,8 @@ export function SettingsPage() {
     { id: 'payment', name: 'Payment Gateway', icon: CreditCard },
     { id: 'tax', name: 'Tax Settings', icon: Calculator },
     { id: 'users', name: 'User Management', icon: Users },
+    { id: 'roles', name: 'Role Management', icon: Shield },
+    { id: 'permissions', name: 'Permissions', icon: Key },
     { id: 'screen', name: 'Screens', icon: Monitor },
     { id: 'email', name: 'Email Configuration', icon: Mail },
     { id: 'security', name: 'Security', icon: Shield },
@@ -45,6 +50,10 @@ export function SettingsPage() {
         return <TaxSettings />;
       case 'users':
         return <UserManagement />;
+      case 'roles':
+        return <RoleManagement />;
+      case 'permissions':
+        return <PermissionManagement />;
       case 'screen':
         return <ScreenManagement />;
       case 'email':
