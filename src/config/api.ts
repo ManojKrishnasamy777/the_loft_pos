@@ -283,6 +283,31 @@ class ApiClient {
     });
   }
 
+  //printers endpoints
+  async getPrinters() {
+    return this.request<any[]>('/printer');
+  }
+
+  async createPrinter(data: any) {
+    return this.request<any>('/printer', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updatePrinter(id: string, data: any) {
+    return this.request<any>(`/printer/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deletePrinter(id: string) {
+    return this.request<any>(`/printer/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
 
   // Audit endpoints
   async getAuditLogs(params?: any) {

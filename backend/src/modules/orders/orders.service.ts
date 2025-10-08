@@ -237,7 +237,8 @@ export class OrdersService {
         createdAt: order.createdAt,
       };
 
-      await this.emailService.sendOrderConfirmation(orderData, order.customerEmail);
+      let res = await this.emailService.sendOrderConfirmation(orderData, order.customerEmail);
+      console.log('Email sent response:', res);
     } catch (error) {
       console.error('Error sending order confirmation email:', error);
       throw error;

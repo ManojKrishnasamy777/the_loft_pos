@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Search, ShoppingCart, CreditCard, Printer, Users, Layers, Plus } from 'lucide-react';
 import { mockMenuItems, mockCategories, loadMenuData } from '../../data/mockData';
 import { usePOS } from '../../contexts/POSContext';
-import { PaymentMethod, Customer, Screen } from '../../types';
+import { PaymentMethod, Customer, Screen, Receipt } from '../../types';
 import { MenuItemCard } from './MenuItemCard';
 import { Cart } from './Cart';
 import { PaymentModal } from './PaymentModal';
 import { apiClient } from '../../config/api';
 import { PrintService } from '../../services/printService';
+import ReceiptPreview from '../ReceiptPreview/receipt_preview';
 
 export function POSInterface() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -24,6 +25,17 @@ export function POSInterface() {
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [customerFormData, setCustomerFormData] = useState({ name: '', email: '', phone: '' });
   const { cart, calculateTotals, clearCart } = usePOS();
+  const receiptData: Receipt = {
+    storeName: 'My POS Store',
+    address: '123 Main Street',
+    items: [
+      { name: 'Apple', qty: 2, price: 4 },
+      { name: 'Banana', qty: 3, price: 6 },
+    ],
+    total: 10,
+    qrCode: 'https://example.com/order/12345',
+    logo: 'https://example.com/logo.png',
+  };
 
   useEffect(() => {
     loadMenuData();
@@ -118,8 +130,8 @@ export function POSInterface() {
             <button
               onClick={() => setSelectedCategory('all')}
               className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${selectedCategory === 'all'
-                  ? 'bg-amber-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-amber-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
             >
               All Items
@@ -129,8 +141,8 @@ export function POSInterface() {
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
                 className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${selectedCategory === category.id
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
               >
                 {category.name}
@@ -349,6 +361,11 @@ export function POSInterface() {
           </div>
         </div>
       )}
+      <div>
+        <h2>POS Terminal</h2>
+        <ReceiptPreview receipt={receiptData} />
+      </div>
     </div>
+
   );
 }

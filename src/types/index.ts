@@ -214,3 +214,19 @@ export interface EmailConfig {
   createdAt: string;
   updatedAt: string;
 }
+
+// src/types/Receipt.ts
+export interface ReceiptItem {
+  name: string;
+  qty: number;
+  price: number;
+}
+
+export interface Receipt {
+  storeName: string;
+  address?: string;
+  items: ReceiptItem[];
+  total: number;
+  qrCode?: string;
+  logo?: string;
+}

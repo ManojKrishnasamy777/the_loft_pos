@@ -12,7 +12,7 @@ export class EmailService {
   constructor(
     @InjectRepository(EmailConfig)
     private emailConfigRepository: Repository<EmailConfig>,
-  ) {}
+  ) { }
 
   async createConfig(createDto: CreateEmailConfigDto): Promise<EmailConfig> {
     const config = this.emailConfigRepository.create(createDto);
@@ -68,6 +68,7 @@ export class EmailService {
 
   async sendEmail(sendEmailDto: SendEmailDto): Promise<any> {
     const config = await this.getActiveConfig();
+    console.log('Active email config:', config);
 
     if (!config) {
       throw new Error('No active email configuration found');
@@ -97,7 +98,7 @@ export class EmailService {
 
   async sendOrderConfirmation(orderData: any, customerEmail: string): Promise<any> {
     const config = await this.getActiveConfig();
-
+    console.log('Active email config:', config);
     if (!config) {
       throw new Error('No active email configuration found');
     }
@@ -108,8 +109,8 @@ export class EmailService {
           `<tr>
             <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">${item.name}</td>
             <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${item.price.toFixed(2)}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${(item.price * item.quantity).toFixed(2)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${Number(item.price).toFixed(2)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${Number(item.price * item.quantity).toFixed(2)}</td>
           </tr>`,
       )
       .join('');
@@ -159,7 +160,7 @@ export class EmailService {
               <tfoot>
                 <tr style="background: #f9fafb; font-weight: bold;">
                   <td colspan="3" style="padding: 15px; text-align: right; border-top: 2px solid #e5e7eb;">Total Amount:</td>
-                  <td style="padding: 15px; text-align: right; border-top: 2px solid #e5e7eb; color: #d97706; font-size: 18px;">₹${orderData.total.toFixed(2)}</td>
+                  <td style="padding: 15px; text-align: right; border-top: 2px solid #e5e7eb; color: #d97706; font-size: 18px;">₹${Number(orderData.total).toFixed(2)}</td>
                 </tr>
               </tfoot>
             </table>

@@ -13,6 +13,7 @@ import { databaseConfig } from './config/database.config';
 import { ScreensModule } from './modules/screens/screens.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { EmailModule } from './modules/email/email.module';
+import { PrinterModule } from './modules/printer/printer.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { EmailModule } from './modules/email/email.module';
     CustomersModule,
     AuditModule,
     EmailModule,
+    PrinterModule
   ],
 })
 export class AppModule { }
