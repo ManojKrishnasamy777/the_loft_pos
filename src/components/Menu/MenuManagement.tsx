@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../../config/api';
-import { Plus, CreditCard as Edit, Trash2, Search, Tag, Coffee, X, Save, Eye, EyeOff } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Search, Tag, Coffee, X, Save, Eye, EyeOff, Upload, Image as ImageIcon } from 'lucide-react';
+import { imageService } from '../../services/imageService';
 
 interface MenuItem {
   id: string;
@@ -12,6 +13,7 @@ interface MenuItem {
   category?: Category;
   isActive: boolean;
   sortOrder: number;
+  image?: string;
 }
 
 interface Category {
@@ -41,8 +43,13 @@ export function MenuManagement() {
     taxRate: '0.05',
     categoryId: '',
     isActive: true,
-    sortOrder: 0
+    sortOrder: 0,
+    image: ''
   });
+
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [categoryForm, setCategoryForm] = useState({
     name: '',
@@ -71,12 +78,42 @@ export function MenuManagement() {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size must be less than 5MB');
+        return;
+      }
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview('');
+    setItemForm({ ...itemForm, image: '' });
+  };
+
   const handleSaveItem = async () => {
     try {
+      setUploadingImage(true);
+      let imageUrl = itemForm.image;
+
+      if (selectedImage) {
+        imageUrl = await imageService.uploadImage(selectedImage);
+      }
+
       const data = {
         ...itemForm,
         price: parseFloat(itemForm.price),
-        taxRate: parseFloat(itemForm.taxRate)
+        taxRate: parseFloat(itemForm.taxRate),
+        image: imageUrl
       };
 
       if (editingItem) {
@@ -91,6 +128,8 @@ export function MenuManagement() {
     } catch (error) {
       console.error('Failed to save menu item:', error);
       alert('Failed to save menu item. Please try again.');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -147,8 +186,11 @@ export function MenuManagement() {
       taxRate: item.taxRate.toString(),
       categoryId: item.categoryId,
       isActive: item.isActive,
-      sortOrder: item.sortOrder
+      sortOrder: item.sortOrder,
+      image: item.image || ''
     });
+    setImagePreview(item.image || '');
+    setSelectedImage(null);
     setShowItemModal(true);
   };
 
@@ -172,8 +214,11 @@ export function MenuManagement() {
       taxRate: '0.05',
       categoryId: '',
       isActive: true,
-      sortOrder: 0
+      sortOrder: 0,
+      image: ''
     });
+    setSelectedImage(null);
+    setImagePreview('');
   };
 
   const resetCategoryForm = () => {
@@ -276,38 +321,49 @@ export function MenuManagement() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
                   {filteredItems.map((item) => (
-                    <div key={item.id} className={`bg-white border-2 rounded-lg p-4 ${item.isActive ? 'border-gray-200' : 'border-red-200 bg-red-50'}`}>
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                          <p className="text-xs text-gray-500">{item.category?.name}</p>
+                    <div key={item.id} className={`bg-white border-2 rounded-lg overflow-hidden ${item.isActive ? 'border-gray-200' : 'border-red-200 bg-red-50'}`}>
+                      {item.image && (
+                        <div className="w-full h-48 bg-gray-100">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
-                        <div className="flex space-x-1">
-                          <button
-                            onClick={() => handleToggleItemStatus(item.id)}
-                            className="p-1 text-gray-400 hover:text-gray-600"
-                            title={item.isActive ? 'Disable' : 'Enable'}
-                          >
-                            {item.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                          </button>
-                          <button
-                            onClick={() => openEditItem(item)}
-                            className="p-1 text-blue-600 hover:text-blue-800"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteItem(item.id)}
-                            className="p-1 text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                      )}
+                      <div className="p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900">{item.name}</h3>
+                            <p className="text-xs text-gray-500">{item.category?.name}</p>
+                          </div>
+                          <div className="flex space-x-1">
+                            <button
+                              onClick={() => handleToggleItemStatus(item.id)}
+                              className="p-1 text-gray-400 hover:text-gray-600"
+                              title={item.isActive ? 'Disable' : 'Enable'}
+                            >
+                              {item.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                            </button>
+                            <button
+                              onClick={() => openEditItem(item)}
+                              className="p-1 text-blue-600 hover:text-blue-800"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="p-1 text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">{item.description}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-amber-600">₹{Number(item.price || 0).toFixed(2)}</span>
-                        <span className="text-xs text-gray-500">Tax: {(Number(item.taxRate || 0) * 100).toFixed(0)}%</span>
+                        <p className="text-sm text-gray-600 mb-3">{item.description}</p>
+                        <div className="flex justify-between items-center">
+                          <span className="text-lg font-bold text-amber-600">₹{Number(item.price || 0).toFixed(2)}</span>
+                          <span className="text-xs text-gray-500">Tax: {(Number(item.taxRate || 0) * 100).toFixed(0)}%</span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -385,6 +441,44 @@ export function MenuManagement() {
             </div>
 
             <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+                <div className="space-y-3">
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-48 object-cover rounded-lg border-2 border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="h-10 w-10 text-gray-400 mb-3" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG, WEBP up to 5MB</p>
+                      </div>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                        onChange={handleImageSelect}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                 <input
@@ -473,10 +567,20 @@ export function MenuManagement() {
               </button>
               <button
                 onClick={handleSaveItem}
-                className="flex items-center space-x-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700"
+                disabled={uploadingImage}
+                className="flex items-center space-x-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                <Save className="h-4 w-4" />
-                <span>Save</span>
+                {uploadingImage ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    <span>Save</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
