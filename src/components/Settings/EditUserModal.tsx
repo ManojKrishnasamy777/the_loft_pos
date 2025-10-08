@@ -1,6 +1,26 @@
 import { useState, useEffect } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
-import { User, Role } from '../../services/supabaseClient';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role_id: string;
+  role?: Role;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Role {
+  id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  permissions?: any[];
+  created_at: string;
+  updated_at: string;
+}
 
 interface EditUserModalProps {
   isOpen: boolean;

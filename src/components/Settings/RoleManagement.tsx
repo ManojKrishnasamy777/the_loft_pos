@@ -1,6 +1,26 @@
 import { useState, useEffect } from 'react';
 import { Shield, Plus, Edit, Trash2, Check } from 'lucide-react';
-import { roleService, permissionService, Role, Permission } from '../../services/supabaseClient';
+import { apiClient } from '../../config/api';
+
+interface Role {
+  id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  permissions?: Permission[];
+  created_at: string;
+  updated_at: string;
+}
+
+interface Permission {
+  id: string;
+  name: string;
+  resource: string;
+  action: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export function RoleManagement() {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -18,8 +38,8 @@ export function RoleManagement() {
     try {
       setLoading(true);
       const [rolesData, permissionsData] = await Promise.all([
-        roleService.getAll(),
-        permissionService.getAll()
+        apiClient.getRoles(),
+        apiClient.getPermissions()
       ]);
       setRoles(rolesData);
       setPermissions(permissionsData);
@@ -32,7 +52,7 @@ export function RoleManagement() {
 
   const handleAddRole = async (roleData: { name: string; description: string }) => {
     try {
-      await roleService.create({ ...roleData, is_active: true });
+      await apiClient.createRole({ ...roleData, is_active: true });
       await loadData();
       setShowAddModal(false);
     } catch (error) {
@@ -47,7 +67,7 @@ export function RoleManagement() {
     }
 
     try {
-      await roleService.delete(roleId);
+      await apiClient.deleteRole(roleId);
       await loadData();
     } catch (error) {
       console.error('Failed to delete role:', error);
@@ -278,7 +298,7 @@ function ManagePermissionsModal({ role, permissions, groupedPermissions, onClose
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await roleService.updatePermissions(role.id, Array.from(selectedPermissions));
+      await apiClient.assignPermissionsToRole(role.id, Array.from(selectedPermissions));
       await onUpdate();
       onClose();
     } catch (error) {

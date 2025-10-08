@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Key, Plus, Shield } from 'lucide-react';
-import { permissionService, Permission } from '../../services/supabaseClient';
+import { apiClient } from '../../config/api';
+
+interface Permission {
+  id: string;
+  name: string;
+  resource: string;
+  action: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export function PermissionManagement() {
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -14,7 +24,7 @@ export function PermissionManagement() {
   const loadPermissions = async () => {
     try {
       setLoading(true);
-      const data = await permissionService.getAll();
+      const data = await apiClient.getPermissions();
       setPermissions(data);
     } catch (error) {
       console.error('Failed to load permissions:', error);

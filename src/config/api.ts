@@ -343,6 +343,88 @@ class ApiClient {
       body: JSON.stringify({ orderData, customerEmail }),
     });
   }
+
+  async getRoles() {
+    return this.request<any[]>('/users/roles');
+  }
+
+  async getRoleById(id: string) {
+    return this.request<any>(`/users/roles/${id}`);
+  }
+
+  async createRole(data: any) {
+    return this.request<any>('/users/roles', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateRole(id: string, data: any) {
+    return this.request<any>(`/users/roles/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteRole(id: string) {
+    return this.request<any>(`/users/roles/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getPermissions() {
+    return this.request<any[]>('/users/permissions');
+  }
+
+  async assignPermissionsToRole(roleId: string, permissionIds: string[]) {
+    return this.request<any>(`/users/roles/${roleId}/permissions`, {
+      method: 'PUT',
+      body: JSON.stringify({ permissionIds }),
+    });
+  }
+
+  async deleteUser(id: string) {
+    return this.request<any>(`/users/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async toggleUserStatus(id: string) {
+    return this.request<any>(`/users/${id}/toggle-status`, {
+      method: 'PATCH',
+    });
+  }
+
+  async uploadImage(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const url = `${this.baseURL}/menu/upload`;
+    const headers: HeadersInit = {};
+
+    if (this.token) {
+      headers.Authorization = `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Image upload failed');
+    }
+
+    return response.json();
+  }
+
+  async deleteImage(imageUrl: string) {
+    return this.request<any>('/menu/delete-image', {
+      method: 'DELETE',
+      body: JSON.stringify({ imageUrl }),
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

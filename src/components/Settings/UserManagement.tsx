@@ -1,9 +1,30 @@
 import { useState, useEffect } from 'react';
 import { Edit, Trash2, UserPlus, Shield, Mail } from 'lucide-react';
-import { userService, roleService, User, Role } from '../../services/supabaseClient';
+import { apiClient } from '../../config/api';
 import { AddUserModal } from './AddUserModal';
 import { EditUserModal } from './EditUserModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role_id: string;
+  role?: Role;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Role {
+  id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  permissions?: any[];
+  created_at: string;
+  updated_at: string;
+}
 
 export function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -22,8 +43,8 @@ export function UserManagement() {
     try {
       setLoading(true);
       const [usersData, rolesData] = await Promise.all([
-        userService.getAll(),
-        roleService.getAll()
+        apiClient.getUsers(),
+        apiClient.getRoles()
       ]);
       setUsers(usersData);
       setRoles(rolesData);
@@ -36,7 +57,7 @@ export function UserManagement() {
 
   const handleAddUser = async (userData: any) => {
     try {
-      await userService.create(userData);
+      await apiClient.createUser(userData);
       await loadData();
       setShowAddModal(false);
     } catch (error) {
@@ -46,7 +67,7 @@ export function UserManagement() {
 
   const handleEditUser = async (userId: string, userData: any) => {
     try {
-      await userService.update(userId, userData);
+      await apiClient.updateUser(userId, userData);
       await loadData();
       setShowEditModal(false);
       setSelectedUser(null);
@@ -58,7 +79,7 @@ export function UserManagement() {
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
     try {
-      await userService.delete(selectedUser.id);
+      await apiClient.deleteUser(selectedUser.id);
       await loadData();
       setShowDeleteModal(false);
       setSelectedUser(null);
