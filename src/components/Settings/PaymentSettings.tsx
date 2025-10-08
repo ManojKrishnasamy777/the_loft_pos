@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  CreditCard, 
-  Settings, 
-  Eye, 
-  EyeOff, 
-  Save, 
+import toast from 'react-hot-toast';
+import {
+  CreditCard,
+  Settings,
+  Eye,
+  EyeOff,
+  Save,
   TestTube,
   CheckCircle,
   XCircle,
@@ -34,12 +35,12 @@ export function PaymentSettings() {
     try {
       const success = await initializeRazorpay(config);
       if (success) {
-        alert('Payment gateway configuration saved successfully!');
+        toast.success('Payment gateway configuration saved successfully');
       } else {
-        alert('Failed to save configuration. Please check your settings.');
+        toast.error('Failed to save configuration. Please check your settings.');
       }
     } catch (error) {
-      alert('Error saving configuration: ' + (error as Error).message);
+      toast.error('Error saving configuration: ' + (error as Error).message);
     } finally {
       setIsSaving(false);
     }
@@ -52,14 +53,17 @@ export function PaymentSettings() {
     try {
       // Simulate connection test
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       if (config.keyId && config.keySecret) {
         setTestResult('success');
+        toast.success('Connection test successful');
       } else {
         setTestResult('error');
+        toast.error('Connection test failed. Please check your credentials.');
       }
     } catch (error) {
       setTestResult('error');
+      toast.error('Connection test failed');
     } finally {
       setIsTestingConnection(false);
     }

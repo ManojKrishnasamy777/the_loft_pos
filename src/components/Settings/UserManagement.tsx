@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { Edit, Trash2, UserPlus, Shield, Mail } from 'lucide-react';
 import { apiClient } from '../../config/api';
 import { AddUserModal } from './AddUserModal';
@@ -50,6 +51,7 @@ export function UserManagement() {
       setRoles(rolesData);
     } catch (error) {
       console.error('Failed to load data:', error);
+      toast.error('Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -60,7 +62,9 @@ export function UserManagement() {
       await apiClient.createUser(userData);
       await loadData();
       setShowAddModal(false);
+      toast.success('User created successfully');
     } catch (error) {
+      toast.error('Failed to create user');
       throw error;
     }
   };
@@ -71,7 +75,9 @@ export function UserManagement() {
       await loadData();
       setShowEditModal(false);
       setSelectedUser(null);
+      toast.success('User updated successfully');
     } catch (error) {
+      toast.error('Failed to update user');
       throw error;
     }
   };
@@ -83,7 +89,9 @@ export function UserManagement() {
       await loadData();
       setShowDeleteModal(false);
       setSelectedUser(null);
+      toast.success('User deleted successfully');
     } catch (error) {
+      toast.error('Failed to delete user');
       throw error;
     }
   };

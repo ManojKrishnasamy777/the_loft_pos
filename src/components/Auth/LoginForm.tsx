@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { Film, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -18,6 +19,9 @@ export function LoginForm() {
     debugger
     if (!success) {
       setError('Invalid credentials. Please try again.');
+      toast.error('Login failed. Please check your credentials.');
+    } else {
+      toast.success('Successfully logged in!');
     }
   };
 

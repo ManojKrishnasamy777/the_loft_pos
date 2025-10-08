@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { X, CreditCard, Smartphone, DollarSign, Globe, Loader2 } from 'lucide-react';
 import { PaymentMethod } from '../../types';
 import { usePOS } from '../../contexts/POSContext';
@@ -75,12 +76,15 @@ export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }
         paymentData: paymentResult
       });
 
-      const emailNote = customerEmail ? '\n\nA confirmation email has been sent to your email address.' : '';
       const successMessage = paymentMethod === 'cash'
-        ? `Order ${order.orderNumber} completed successfully!${emailNote}`
-        : `Payment successful! Order ${order.orderNumber} completed.${emailNote}`;
+        ? `Order ${order.orderNumber} completed successfully!`
+        : `Payment successful! Order ${order.orderNumber} completed.`;
 
-      alert(successMessage);
+      if (customerEmail) {
+        toast.success(`${successMessage} Confirmation email sent.`, { duration: 4000 });
+      } else {
+        toast.success(successMessage);
+      }
 
       if (onSuccess) {
         onSuccess(order);

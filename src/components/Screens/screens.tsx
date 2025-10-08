@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { apiClient } from '../../config/api';
 import { Plus, Edit, Trash2, Layers } from 'lucide-react';
 
@@ -33,6 +34,7 @@ export function ScreenManagement() {
             setScreens(data);
         } catch (err) {
             console.error('Failed to load screens:', err);
+            toast.error('Failed to load screens');
         } finally {
             setLoading(false);
         }
@@ -56,8 +58,10 @@ export function ScreenManagement() {
             setEditingScreen(null);
             setFormData({ name: '', capacity: '', description: '', isActive: true });
             loadScreens();
+            toast.success(editingScreen ? 'Screen updated successfully' : 'Screen created successfully');
         } catch (err) {
             console.error('Save failed:', err);
+            toast.error('Failed to save screen. Please try again.');
         }
     };
 
@@ -77,8 +81,10 @@ export function ScreenManagement() {
             try {
                 await apiClient.deleteScreen(id);
                 loadScreens();
+                toast.success('Screen deleted successfully');
             } catch (err) {
                 console.error('Delete failed:', err);
+                toast.error('Failed to delete screen');
             }
         }
     };

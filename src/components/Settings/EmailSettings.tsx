@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { Save, Mail, Upload, AlertCircle, CheckCircle } from 'lucide-react';
 import type { EmailConfig } from '../../types';
 import apiClient from '../../config/api';
@@ -49,6 +50,7 @@ export default function EmailSettings() {
       }
     } catch (err) {
       console.error('Failed to load email configuration:', err);
+      toast.error('Failed to load email configuration');
     }
   };
 
@@ -82,8 +84,11 @@ export default function EmailSettings() {
 
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
+      toast.success('Email configuration saved successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save email configuration');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to save email configuration';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsSaving(false);
     }
@@ -102,11 +107,18 @@ export default function EmailSettings() {
     try {
       const result = await apiClient.testEmailConnection(emailConfig.id);
       setTestResult(result);
+      if (result.success) {
+        toast.success('Email connection test successful');
+      } else {
+        toast.error('Email connection test failed');
+      }
     } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to test email connection';
       setTestResult({
         success: false,
-        message: err instanceof Error ? err.message : 'Failed to test email connection',
+        message: errorMsg,
       });
+      toast.error(errorMsg);
     } finally {
       setIsTesting(false);
     }

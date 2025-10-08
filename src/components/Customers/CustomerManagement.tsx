@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { apiClient } from '../../config/api';
 import { Plus, Edit, Trash2, Users, Mail, Phone, MapPin } from 'lucide-react';
 import { Customer } from '../../types';
@@ -27,6 +28,7 @@ export function CustomerManagement() {
       setCustomers(data);
     } catch (err) {
       console.error('Failed to load customers:', err);
+      toast.error('Failed to load customers');
     } finally {
       setLoading(false);
     }
@@ -45,8 +47,10 @@ export function CustomerManagement() {
       setEditingCustomer(null);
       setFormData({ name: '', email: '', phone: '', address: '', notes: '', isActive: true });
       loadCustomers();
+      toast.success(editingCustomer ? 'Customer updated successfully' : 'Customer created successfully');
     } catch (err) {
       console.error('Save failed:', err);
+      toast.error('Failed to save customer. Please try again.');
     }
   };
 
@@ -68,8 +72,10 @@ export function CustomerManagement() {
       try {
         await apiClient.deleteCustomer(id);
         loadCustomers();
+        toast.success('Customer deleted successfully');
       } catch (err) {
         console.error('Delete failed:', err);
+        toast.error('Failed to delete customer');
       }
     }
   };

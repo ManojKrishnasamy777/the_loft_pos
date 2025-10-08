@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { apiClient } from '../../config/api';
 import {
   Package,
@@ -57,6 +58,7 @@ export function OrdersPage() {
       setTotal(response.total);
     } catch (error) {
       console.error('Failed to load orders:', error);
+      toast.error('Failed to load orders');
     } finally {
       setLoading(false);
     }

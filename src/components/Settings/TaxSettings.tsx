@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { apiClient } from '../../config/api';
 import { Save, Plus, CreditCard as Edit, Trash2 } from 'lucide-react';
 
@@ -29,6 +30,7 @@ export function TaxSettings() {
       setTaxEnabled(settingsMap.tax_enabled === 'true');
     } catch (error) {
       console.error('Failed to load tax settings:', error);
+      toast.error('Failed to load tax settings');
     } finally {
       setLoading(false);
     }
@@ -40,10 +42,10 @@ export function TaxSettings() {
         apiClient.updateSetting('tax_rate', { value: defaultTaxRate }),
         apiClient.updateSetting('tax_enabled', { value: taxEnabled.toString() })
       ]);
-      alert('Tax settings saved successfully!');
+      toast.success('Tax settings saved successfully');
     } catch (error) {
       console.error('Failed to save tax settings:', error);
-      alert('Failed to save tax settings. Please try again.');
+      toast.error('Failed to save tax settings. Please try again.');
     }
   };
 

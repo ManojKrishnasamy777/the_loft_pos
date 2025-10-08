@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { apiClient } from '../../config/api';
 import { Plus, CreditCard as Edit, Trash2, Search, Tag, Coffee, X, Save, Eye, EyeOff, Upload, Image as ImageIcon } from 'lucide-react';
 import { imageService } from '../../services/imageService';
@@ -73,6 +74,7 @@ export function MenuManagement() {
       setCategories(categoriesData);
     } catch (error) {
       console.error('Failed to load menu data:', error);
+      toast.error('Failed to load menu data');
     } finally {
       setLoading(false);
     }
@@ -125,9 +127,10 @@ export function MenuManagement() {
       await loadData();
       setShowItemModal(false);
       resetItemForm();
+      toast.success(editingItem ? 'Menu item updated successfully' : 'Menu item created successfully');
     } catch (error) {
       console.error('Failed to save menu item:', error);
-      alert('Failed to save menu item. Please try again.');
+      toast.error('Failed to save menu item. Please try again.');
     } finally {
       setUploadingImage(false);
     }
@@ -150,9 +153,10 @@ export function MenuManagement() {
       await loadData();
       setShowCategoryModal(false);
       resetCategoryForm();
+      toast.success(editingCategory ? 'Category updated successfully' : 'Category created successfully');
     } catch (error) {
       console.error('Failed to save category:', error);
-      alert('Failed to save category. Please try again.');
+      toast.error('Failed to save category. Please try again.');
     }
   };
 
@@ -162,9 +166,10 @@ export function MenuManagement() {
     try {
       await apiClient.request(`/menu/items/${id}`, { method: 'DELETE' });
       await loadData();
+      toast.success('Menu item deleted successfully');
     } catch (error) {
       console.error('Failed to delete menu item:', error);
-      alert('Failed to delete menu item. Please try again.');
+      toast.error('Failed to delete menu item. Please try again.');
     }
   };
 
@@ -172,8 +177,10 @@ export function MenuManagement() {
     try {
       await apiClient.request(`/menu/items/${id}/toggle-status`, { method: 'PATCH' });
       await loadData();
+      toast.success('Item status updated');
     } catch (error) {
       console.error('Failed to toggle item status:', error);
+      toast.error('Failed to update item status');
     }
   };
 

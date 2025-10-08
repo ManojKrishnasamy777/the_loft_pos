@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { Shield, Plus, Edit, Trash2, Check } from 'lucide-react';
 import { apiClient } from '../../config/api';
 
@@ -45,6 +46,7 @@ export function RoleManagement() {
       setPermissions(permissionsData);
     } catch (error) {
       console.error('Failed to load data:', error);
+      toast.error('Failed to load roles and permissions');
     } finally {
       setLoading(false);
     }
@@ -55,9 +57,10 @@ export function RoleManagement() {
       await apiClient.createRole({ ...roleData, isActive: true });
       await loadData();
       setShowAddModal(false);
+      toast.success('Role created successfully');
     } catch (error) {
       console.error('Failed to create role:', error);
-      alert('Failed to create role. Please try again.');
+      toast.error('Failed to create role. Please try again.');
     }
   };
 
@@ -69,9 +72,10 @@ export function RoleManagement() {
     try {
       await apiClient.deleteRole(roleId);
       await loadData();
+      toast.success('Role deleted successfully');
     } catch (error) {
       console.error('Failed to delete role:', error);
-      alert('Failed to delete role. It may be in use by existing users.');
+      toast.error('Failed to delete role. It may be in use by existing users.');
     }
   };
 
@@ -301,9 +305,10 @@ function ManagePermissionsModal({ role, permissions, groupedPermissions, onClose
       await apiClient.assignPermissionsToRole(role.id, Array.from(selectedPermissions));
       await onUpdate();
       onClose();
+      toast.success('Permissions updated successfully');
     } catch (error) {
       console.error('Failed to update permissions:', error);
-      alert('Failed to update permissions. Please try again.');
+      toast.error('Failed to update permissions. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
