@@ -10,37 +10,93 @@ export class PrintService {
 
     async print(receipt: any) {
         const config = await this.printerConfigService.getDefaultPrinter();
-
         if (!config) throw new Error('No printer configured!');
+        console.log('Printer config:', config);
 
-        const thermalPrinter = new printer({
-            type: PrinterTypes[config.type],
-            interface:
-                config.interface_type === 'USB'
-                    ? config.usb_identifier || 'usb'
-                    : `tcp://${config.network_ip}:${config.network_port}`,
-        });
+        // ===========================
+        // Determine Interface Type
+        // ===========================
+        let interfaceConn: string;
 
-        // Header
+        switch (config.interface_type) {
+            case 'USB':
+                // Windows USB: wrap printer name in quotes
+                interfaceConn = `printer:"${config.name}"`;
+                break;
+
+            case 'NETWORK':
+                // TCP/IP network printer
+                interfaceConn = `tcp://${config.network_ip}:${config.network_port || 9100}`;
+                break;
+
+            // case 'SERIAL':
+            //     // Serial/COM printer
+            //     interfaceConn = config.serial_port || 'COM1';
+            //     break;
+
+            // case 'BLUETOOTH':
+            //     // Bluetooth printer (on Windows or Linux)
+            //     interfaceConn = config.bluetooth_address || 'BTSERIAL:001';
+            //     break;
+
+            default:
+                throw new Error('Unsupported printer interface type!');
+        }
+
+        console.log('Using interface:', interfaceConn);
+
+        // ===========================
+        // Create Thermal Printer Instance
+        // ===========================
+        let thermalPrinter: any = null;
+        try {
+            thermalPrinter = new printer({
+                type: PrinterTypes.EPSON, // ESC/POS compatible
+                interface: interfaceConn,
+                options: { timeout: 5000 },
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
+                driver: config.interface_type === 'USB' ? require('printer') : undefined,
+            });
+        } catch (error: any) {
+            console.error('❌ Print error:', error);
+            return { success: false, message: error.message };
+        }
+        // ===========================
+        // Check Printer Connection
+        // ===========================
+        const isConnected = await thermalPrinter.isPrinterConnected();
+        console.log('Printer connected:', isConnected);
+        if (!isConnected) throw new Error('Printer not reachable. Check connection!');
+
+        // ===========================
+        // PRINT HEADER
+        // ===========================
         thermalPrinter.alignCenter();
-        // if (receipt.logo) thermalPrinter.printImage(receipt.logo);
-        thermalPrinter.println(receipt.storeName);
+        thermalPrinter.bold(true);
+        thermalPrinter.println(receipt.storeName || 'My Store');
+        thermalPrinter.bold(false);
         thermalPrinter.println(receipt.address || '');
-        thermalPrinter.println('-----------------------------');
+        thermalPrinter.drawLine();
 
-        // Items
-        receipt.items.forEach(item => {
+        // ===========================
+        // PRINT ITEMS
+        // ===========================
+        receipt.items?.forEach((item: any) => {
             thermalPrinter.tableCustom([
                 { text: item.name, align: 'LEFT', width: 0.5 },
-                { text: `${item.qty} x $${item.price}`, align: 'RIGHT', width: 0.5 },
+                { text: `${item.qty} x ₹${item.price}`, align: 'RIGHT', width: 0.5 },
             ]);
         });
 
-        thermalPrinter.println('-----------------------------');
+        thermalPrinter.drawLine();
         thermalPrinter.alignRight();
-        thermalPrinter.println(`Total: $${receipt.total}`);
+        thermalPrinter.bold(true);
+        thermalPrinter.println(`TOTAL: ₹${receipt.total}`);
+        thermalPrinter.bold(false);
 
-        // QR code
+        // ===========================
+        // OPTIONAL QR CODE
+        // ===========================
         if (receipt.qrCode) {
             thermalPrinter.println('');
             thermalPrinter.alignCenter();
@@ -49,10 +105,15 @@ export class PrintService {
 
         thermalPrinter.cut();
 
+        // ===========================
+        // EXECUTE PRINT
+        // ===========================
         try {
             await thermalPrinter.execute();
+            console.log('✅ Print success');
             return { success: true };
-        } catch (error) {
+        } catch (error: any) {
+            console.error('❌ Print error:', error);
             return { success: false, message: error.message };
         }
     }

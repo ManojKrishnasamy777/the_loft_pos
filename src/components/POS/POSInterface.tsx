@@ -361,10 +361,10 @@ export function POSInterface() {
           </div>
         </div>
       )}
-      <div>
+      {/* <div>
         <h2>POS Terminal</h2>
         <ReceiptPreview receipt={receiptData} />
-      </div>
+      </div> */}
     </div>
 
   );
