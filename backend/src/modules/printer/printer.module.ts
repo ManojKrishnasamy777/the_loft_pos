@@ -1,16 +1,15 @@
-// src/modules/printer/printer.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PrinterConfigService } from './printer-config.service';
-import { PrinterConfigController } from './printer-config.controller';
-import { PrintService } from './print.service';
-import { PrintController } from './print.controller';
 import { PrinterConfig } from '../../entities/printer_config.entity';
+import { PrinterConfigService } from './printer-config.service';
+import { ThermalPrintService } from './thermal-print.service';
+import { PrinterConfigController } from './printer-config.controller';
+import { PrintController } from './print.controller';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([PrinterConfig])],
-    providers: [PrinterConfigService, PrintService],
-    controllers: [PrinterConfigController, PrintController],
-    exports: [PrinterConfigService],
+  imports: [TypeOrmModule.forFeature([PrinterConfig])],
+  providers: [PrinterConfigService, ThermalPrintService],
+  controllers: [PrinterConfigController, PrintController],
+  exports: [PrinterConfigService, ThermalPrintService],
 })
-export class PrinterModule { }
+export class PrinterModule {}

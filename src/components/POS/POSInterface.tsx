@@ -7,8 +7,7 @@ import { MenuItemCard } from './MenuItemCard';
 import { Cart } from './Cart';
 import { PaymentModal } from './PaymentModal';
 import { apiClient } from '../../config/api';
-import { PrintService } from '../../services/printService';
-import ReceiptPreview from '../ReceiptPreview/receipt_preview';
+import toast from 'react-hot-toast';
 
 export function POSInterface() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -25,17 +24,6 @@ export function POSInterface() {
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [customerFormData, setCustomerFormData] = useState({ name: '', email: '', phone: '' });
   const { cart, calculateTotals, clearCart } = usePOS();
-  const receiptData: Receipt = {
-    storeName: 'My POS Store',
-    address: '123 Main Street',
-    items: [
-      { name: 'Apple', qty: 2, price: 4 },
-      { name: 'Banana', qty: 3, price: 6 },
-    ],
-    total: 10,
-    qrCode: 'https://example.com/order/12345',
-    logo: 'https://example.com/logo.png',
-  };
 
   useEffect(() => {
     loadMenuData();
@@ -78,6 +66,53 @@ export function POSInterface() {
       setScreens(data.filter((s: Screen) => s.isActive));
     } catch (error) {
       console.error('Failed to fetch screens:', error);
+    }
+  };
+
+  const handlePrintReceipt = async (order: any) => {
+    try {
+      const settings = await apiClient.getSettings();
+      const settingsMap = settings.reduce((acc: any, setting: any) => {
+        acc[setting.key] = setting.value;
+        return acc;
+      }, {});
+
+      const receiptData = {
+        storeName: settingsMap.company_name || 'The Loft Coimbatore',
+        address: settingsMap.company_address || 'Coimbatore, Tamil Nadu',
+        orderNumber: order.orderNumber || order.order_number,
+        customerName: order.customer?.name || order.customer_name || 'Walk-in Customer',
+        items: (order.items || order.orderItems || []).map((item: any) => ({
+          name: item.menuItem?.name || item.name || 'Item',
+          qty: item.quantity,
+          price: item.price || item.menuItem?.price || 0,
+        })),
+        subtotal: order.subtotal || 0,
+        tax: order.taxAmount || order.tax_amount || 0,
+        total: order.total || 0,
+        paymentMethod: order.payment?.paymentMethod || order.payment?.payment_method || 'Cash',
+        qrCode: order.orderNumber || order.order_number,
+      };
+
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('http://localhost:3001/api/print/receipt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(receiptData),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        toast.success('Receipt printed successfully');
+      } else {
+        toast.error(`Print failed: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error printing receipt:', error);
+      toast.error('Error printing receipt');
     }
   };
 
@@ -257,15 +292,11 @@ export function POSInterface() {
             </button>
 
             <button
-              onClick={async () => {
+              onClick={() => {
                 if (lastOrder) {
-                  await PrintService.printReceipt(lastOrder, {
-                    showLogo: true,
-                    showGst: true,
-                    showQr: false
-                  });
+                  handlePrintReceipt(lastOrder);
                 } else {
-                  alert('No order to print. Complete an order first.');
+                  toast.error('No order to print. Complete an order first.');
                 }
               }}
               disabled={!lastOrder}
@@ -295,11 +326,7 @@ export function POSInterface() {
             const autoPrint = settings.find((s: any) => s.key === 'auto_print')?.value === 'true';
 
             if (autoPrint) {
-              await PrintService.printReceipt(order, {
-                showLogo: true,
-                showGst: true,
-                showQr: false
-              });
+              await handlePrintReceipt(order);
             }
           }}
         />
@@ -361,11 +388,6 @@ export function POSInterface() {
           </div>
         </div>
       )}
-      {/* <div>
-        <h2>POS Terminal</h2>
-        <ReceiptPreview receipt={receiptData} />
-      </div> */}
     </div>
-
   );
 }

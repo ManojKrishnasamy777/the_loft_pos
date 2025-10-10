@@ -23,15 +23,13 @@ import { ScreenManagement } from '../Screens/screens';
 import EmailSettings from './EmailSettings';
 import { RoleManagement } from './RoleManagement';
 import { PermissionManagement } from './PermissionManagement';
-import PrinterConfigPage from '../Printer/printer_config';
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState('payment');
 
   const tabs = [
     { id: 'payment', name: 'Payment Gateway', icon: CreditCard },
-    { id: 'printer', name: 'Printer', icon: CreditCard },
-    { id: 'printerconfig', name: 'Printer Config', icon: CreditCard },
+    { id: 'printer', name: 'Thermal Printer', icon: Printer },
     { id: 'tax', name: 'Tax Settings', icon: Calculator },
     { id: 'users', name: 'User Management', icon: Users },
     { id: 'roles', name: 'Role Management', icon: Shield },
@@ -49,8 +47,6 @@ export function SettingsPage() {
         return <PaymentSettings />;
       case 'printer':
         return <PrinterSettings />;
-      case 'printerconfig':
-        return <PrinterConfigPage />;
       case 'tax':
         return <TaxSettings />;
       case 'users':
