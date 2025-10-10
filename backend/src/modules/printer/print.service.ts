@@ -1,8 +1,8 @@
-// print.service.ts
 import { Injectable } from '@nestjs/common';
-import * as ThermalPrinter from 'node-thermal-printer';
-const { printer, types: PrinterTypes } = ThermalPrinter;
 import { PrinterConfigService } from './printer-config.service';
+
+const ThermalPrinter = require('node-thermal-printer');
+const PrinterTypes = ThermalPrinter.types;
 
 @Injectable()
 export class PrintService {
@@ -50,13 +50,21 @@ export class PrintService {
         // ===========================
         let thermalPrinter: any = null;
         try {
-            thermalPrinter = new printer({
-                type: PrinterTypes.EPSON, // ESC/POS compatible
+            const printerOptions: any = {
+                type: PrinterTypes.EPSON,
                 interface: interfaceConn,
                 options: { timeout: 5000 },
-                // eslint-disable-next-line @typescript-eslint/no-require-imports
-                driver: config.interface_type === 'USB' ? require('printer') : undefined,
-            });
+            };
+
+            if (config.interface_type === 'USB') {
+                try {
+                    printerOptions.driver = require('printer');
+                } catch (driverError) {
+                    console.warn('USB printer driver not available, falling back to network printing');
+                }
+            }
+
+            thermalPrinter = new ThermalPrinter.printer(printerOptions);
         } catch (error: any) {
             console.error('❌ Print error:', error);
             return { success: false, message: error.message };

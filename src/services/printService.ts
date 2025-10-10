@@ -21,31 +21,63 @@ export class PrintService {
   }
 
   static async printReceipt(order: any, options: PrintOptions = {}) {
-    debugger
     const settings = await this.getSettings();
     const printerEnabled = settings.printer_enabled === 'true';
+    const printerType = settings.printer_type || 'thermal';
 
     if (!printerEnabled) {
       console.log('Printer is disabled in settings');
       this.downloadReceipt(order, settings, options);
       return;
     }
-    // eslint-disable-next-line no-debugger
-    debugger;
-    const receiptHtml = this.generateReceiptHtml(order, settings, options);
 
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(receiptHtml);
-      printWindow.document.close();
-      printWindow.focus();
-
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 250);
+    if (printerType === 'thermal') {
+      console.log('Using thermal printer (backend)');
+      await this.printThermalReceipt(order, settings);
     } else {
-      alert('Please allow pop-ups to print receipts');
+      console.log('Using browser print');
+      const receiptHtml = this.generateReceiptHtml(order, settings, options);
+
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(receiptHtml);
+        printWindow.document.close();
+        printWindow.focus();
+
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 250);
+      } else {
+        alert('Please allow pop-ups to print receipts');
+      }
+    }
+  }
+
+  private static async printThermalReceipt(order: any, settings: any) {
+    try {
+      const receipt = {
+        storeName: settings.company_name || 'The Loft Coimbatore',
+        address: settings.company_address || 'Coimbatore, Tamil Nadu',
+        orderNumber: order.orderNumber || order.order_number,
+        customerName: order.customer?.name || order.customer_name || 'Guest',
+        items: (order.items || order.orderItems || []).map((item: any) => ({
+          name: item.menuItem?.name || item.name || 'Item',
+          qty: item.quantity,
+          price: item.price || item.menuItem?.price || 0,
+        })),
+        subtotal: order.subtotal || 0,
+        tax: order.taxAmount || order.tax_amount || 0,
+        total: order.total || 0,
+        paymentMethod: order.payment?.paymentMethod || order.payment?.payment_method || 'Cash',
+        qrCode: order.orderNumber || order.order_number,
+      };
+
+      await apiClient.printReceipt(receipt);
+      console.log('Thermal receipt printed successfully');
+    } catch (error) {
+      console.error('Failed to print thermal receipt:', error);
+      throw error;
     }
   }
 

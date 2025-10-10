@@ -450,6 +450,13 @@ class ApiClient {
       body: JSON.stringify({ imageUrl }),
     });
   }
+
+  async printReceipt(receipt: any) {
+    return this.request<any>('/receipt/print', {
+      method: 'POST',
+      body: JSON.stringify(receipt),
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

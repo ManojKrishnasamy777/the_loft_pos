@@ -127,6 +127,30 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
+      try {
+        const receipt = {
+          storeName: 'The Loft Coimbatore',
+          address: 'Coimbatore, Tamil Nadu',
+          orderNumber: order.orderNumber || order.order_number,
+          customerName: customerData.name || 'Guest',
+          items: (order.items || order.orderItems || []).map((item: any) => ({
+            name: item.menuItem?.name || item.name || 'Item',
+            qty: item.quantity,
+            price: item.price || item.menuItem?.price || 0,
+          })),
+          subtotal: order.subtotal || 0,
+          tax: order.taxAmount || order.tax_amount || 0,
+          total: order.total || 0,
+          paymentMethod: order.payment?.paymentMethod || customerData.paymentMethod,
+          qrCode: order.orderNumber || order.order_number,
+        };
+
+        await apiClient.printReceipt(receipt);
+        console.log('Receipt sent to printer');
+      } catch (printError) {
+        console.error('Failed to print receipt:', printError);
+      }
+
       clearCart();
 
       return order;
