@@ -1,41 +1,119 @@
+// thermal-print.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { PrinterConfigService } from './printer-config.service';
 import { PrintReceiptDto } from './dto/print-receipt.dto';
-import * as ThermalPrinter from 'node-thermal-printer';
+import * as escpos from 'escpos';
+// Directly import USB constructor
+import { USB } from 'escpos-usb';
+import { Network } from 'escpos-network';
 
 @Injectable()
 export class ThermalPrintService {
   private readonly logger = new Logger(ThermalPrintService.name);
 
-  constructor(private printerConfigService: PrinterConfigService) {}
+  constructor(private printerConfigService: PrinterConfigService) { }
 
-  async printReceipt(receipt: PrintReceiptDto): Promise<{ success: boolean; message?: string }> {
+  async printReceipt(
+    receipt: PrintReceiptDto,
+  ): Promise<{ success: boolean; message?: string }> {
     try {
       const config = await this.printerConfigService.findDefault();
-      this.logger.log(`Using printer: ${config.name} (${config.interface_type})`);
+      if (!config) throw new Error('No default printer configured.');
 
-      const printer = this.createPrinterInstance(config);
+      this.logger.log(`Printing to: ${config.name} (${config.interface_type})`);
 
-      const isConnected = await printer.isPrinterConnected();
-      if (!isConnected) {
-        throw new Error('Printer not reachable. Check connection!');
+      // Create device
+      let device: any;
+      if (config.interface_type === 'USB') {
+        const VENDOR_ID = config.vendor_id || 0x04b8;
+        const PRODUCT_ID = config.product_id || 0x0202;
+        device = new USB(VENDOR_ID, PRODUCT_ID);
+      } else if (config.interface_type === 'NETWORK') {
+        device = new Network(config.network_ip, config.network_port || 9100);
+      } else {
+        throw new Error('Unsupported printer interface type');
       }
 
-      this.buildReceipt(printer, receipt);
+      const printer = new escpos.Printer(device);
 
-      await printer.execute();
-      this.logger.log('Receipt printed successfully');
+      await new Promise<void>((resolve, reject) => {
+        device.open((err: any) => {
+          if (err) return reject(err);
 
-      return { success: true, message: 'Receipt printed successfully' };
-    } catch (error: any) {
-      this.logger.error('Print error:', error);
-      return { success: false, message: error.message };
+          try {
+            // Header
+            printer
+              .align('CT')
+              .style('B')
+              .size(2, 2)
+              .text(receipt.storeName || '')
+              .size(1, 1)
+              .style('NORMAL')
+              .text(receipt.address || '')
+              .text('');
+
+            // Order info
+            printer.align('LT');
+            printer.text(`Order: ${receipt.orderNumber || ''}`);
+            printer.text(`Customer: ${receipt.customerName || ''}`);
+            printer.text(`Date: ${new Date().toLocaleString('en-IN')}`);
+            printer.text('--------------------------------');
+
+            // Items header
+            printer.text(this.padColumns(['ITEM', 'QTY', 'PRICE', 'TOTAL'], [20, 6, 8, 8]));
+
+            // Items
+            (receipt.items || []).forEach((item) => {
+              const name = String(item.name || '').slice(0, 20);
+              const qty = String(item.qty || 0);
+              const price = (item.price || 0).toFixed(2);
+              const total = ((item.qty || 0) * (item.price || 0)).toFixed(2);
+              printer.text(this.padColumns([name, qty, `₹${price}`, `₹${total}`], [20, 6, 8, 8]));
+            });
+
+            printer.text('--------------------------------');
+
+            // Totals
+            printer.text(this.padRightLabelValue('Subtotal', `₹${receipt.subtotal.toFixed(2)}`, 42));
+            printer.text(this.padRightLabelValue('Tax', `₹${receipt.tax.toFixed(2)}`, 42));
+            printer.style('B');
+            printer.text(this.padRightLabelValue('TOTAL', `₹${receipt.total.toFixed(2)}`, 42));
+            printer.style('NORMAL');
+
+            printer.text(`Payment: ${receipt.paymentMethod || ''}`);
+            printer.text('');
+
+            // QR code
+            if (receipt.qrCode) {
+              printer.align('CT');
+              printer.qr(receipt.qrCode, { model: 2, size: 6, error: 'M' });
+              printer.text('');
+            }
+
+            // Footer
+            printer.align('CT');
+            printer.text('Thank you for your visit!');
+            printer.text('');
+            printer.feed(3);
+            printer.cut();
+            printer.close();
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        });
+      });
+
+      return { success: true, message: 'Printed successfully' };
+    } catch (err: any) {
+      this.logger.error('Print error', err);
+      return { success: false, message: err.message || String(err) };
     }
   }
 
   async testPrint(): Promise<{ success: boolean; message?: string }> {
     const testReceipt: PrintReceiptDto = {
-      storeName: 'The Loft Coimbatore',
+      storeName: 'THE LOFT COIMBATORE',
       address: 'Coimbatore, Tamil Nadu',
       orderNumber: 'TEST-001',
       customerName: 'Test Customer',
@@ -49,128 +127,23 @@ export class ThermalPrintService {
       paymentMethod: 'Cash',
       qrCode: 'TEST-001',
     };
-
     return this.printReceipt(testReceipt);
   }
 
-  private createPrinterInstance(config: any): any {
-    let interfaceConn: string;
-    const printerType = this.getPrinterType(config.type);
-
-    switch (config.interface_type) {
-      case 'USB':
-        interfaceConn = `printer:"${config.name}"`;
-        break;
-      case 'NETWORK':
-        interfaceConn = `tcp://${config.network_ip}:${config.network_port || 9100}`;
-        break;
-      default:
-        throw new Error('Unsupported printer interface type');
+  private padColumns(cols: string[], widths: number[]): string {
+    let line = '';
+    for (let i = 0; i < cols.length; i++) {
+      const txt = cols[i] ?? '';
+      const w = widths[i] ?? 10;
+      line += i === cols.length - 1 ? txt.toString().padStart(w) : txt.toString().padEnd(w);
     }
-
-    this.logger.log(`Interface: ${interfaceConn}`);
-
-    const printerOptions: any = {
-      type: printerType,
-      interface: interfaceConn,
-      options: { timeout: 5000 },
-      width: 48,
-    };
-
-    if (config.interface_type === 'USB') {
-      try {
-        printerOptions.driver = require('printer');
-      } catch (error) {
-        this.logger.warn('USB driver not available, using default');
-      }
-    }
-
-    return new ThermalPrinter.printer(printerOptions);
+    return line;
   }
 
-  private getPrinterType(type: string): any {
-    const types = ThermalPrinter.types;
-    switch (type) {
-      case 'EPSON':
-        return types.EPSON;
-      case 'STAR':
-        return types.STAR;
-      case 'GENERIC':
-        return types.GENERIC;
-      default:
-        return types.EPSON;
-    }
-  }
-
-  private buildReceipt(printer: any, receipt: PrintReceiptDto): void {
-    printer.alignCenter();
-    printer.bold(true);
-    printer.setTextSize(1, 1);
-    printer.println(receipt.storeName);
-    printer.bold(false);
-    printer.setTextNormal();
-    printer.println(receipt.address);
-    printer.drawLine();
-
-    printer.alignLeft();
-    printer.println(`Order: ${receipt.orderNumber}`);
-    printer.println(`Customer: ${receipt.customerName}`);
-    printer.println(`Date: ${new Date().toLocaleString('en-IN')}`);
-    printer.drawLine();
-
-    printer.tableCustom([
-      { text: 'Item', align: 'LEFT', width: 0.5, bold: true },
-      { text: 'Qty', align: 'CENTER', width: 0.15, bold: true },
-      { text: 'Price', align: 'RIGHT', width: 0.2, bold: true },
-      { text: 'Total', align: 'RIGHT', width: 0.15, bold: true },
-    ]);
-
-    receipt.items.forEach((item) => {
-      const itemTotal = item.qty * item.price;
-      printer.tableCustom([
-        { text: item.name, align: 'LEFT', width: 0.5 },
-        { text: `${item.qty}`, align: 'CENTER', width: 0.15 },
-        { text: `₹${item.price.toFixed(2)}`, align: 'RIGHT', width: 0.2 },
-        { text: `₹${itemTotal.toFixed(2)}`, align: 'RIGHT', width: 0.15 },
-      ]);
-    });
-
-    printer.drawLine();
-
-    printer.tableCustom([
-      { text: 'Subtotal:', align: 'LEFT', width: 0.7 },
-      { text: `₹${receipt.subtotal.toFixed(2)}`, align: 'RIGHT', width: 0.3 },
-    ]);
-
-    printer.tableCustom([
-      { text: 'Tax:', align: 'LEFT', width: 0.7 },
-      { text: `₹${receipt.tax.toFixed(2)}`, align: 'RIGHT', width: 0.3 },
-    ]);
-
-    printer.drawLine();
-    printer.bold(true);
-    printer.setTextSize(1, 1);
-    printer.tableCustom([
-      { text: 'TOTAL:', align: 'LEFT', width: 0.7, bold: true },
-      { text: `₹${receipt.total.toFixed(2)}`, align: 'RIGHT', width: 0.3, bold: true },
-    ]);
-    printer.setTextNormal();
-    printer.bold(false);
-
-    printer.drawLine();
-    printer.println(`Payment: ${receipt.paymentMethod}`);
-
-    if (receipt.qrCode) {
-      printer.println('');
-      printer.alignCenter();
-      printer.printQR(receipt.qrCode, { cellSize: 6, model: 2 });
-    }
-
-    printer.println('');
-    printer.alignCenter();
-    printer.println('Thank you for your visit!');
-    printer.println('');
-
-    printer.cut();
+  private padRightLabelValue(label: string, value: string, totalWidth: number): string {
+    const left = label + ': ';
+    const right = value;
+    const space = totalWidth - left.length - right.length;
+    return left + (space > 0 ? ' '.repeat(space) : ' ') + right;
   }
 }

@@ -18,9 +18,9 @@ import { UpdatePrinterConfigDto } from './dto/update-printer-config.dto';
 @ApiTags('Printer Configuration')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('api/printer-config')
+@Controller('printer-config')
 export class PrinterConfigController {
-  constructor(private readonly printerConfigService: PrinterConfigService) {}
+  constructor(private readonly printerConfigService: PrinterConfigService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create new printer configuration' })

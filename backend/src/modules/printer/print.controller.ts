@@ -7,9 +7,9 @@ import { PrintReceiptDto } from './dto/print-receipt.dto';
 @ApiTags('Print Receipt')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('api/print')
+@Controller('print')
 export class PrintController {
-  constructor(private readonly thermalPrintService: ThermalPrintService) {}
+  constructor(private readonly thermalPrintService: ThermalPrintService) { }
 
   @Post('receipt')
   @ApiOperation({ summary: 'Print receipt on thermal printer' })

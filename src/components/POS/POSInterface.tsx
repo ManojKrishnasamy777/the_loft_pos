@@ -70,6 +70,7 @@ export function POSInterface() {
   };
 
   const handlePrintReceipt = async (order: any) => {
+    debugger
     try {
       const settings = await apiClient.getSettings();
       const settingsMap = settings.reduce((acc: any, setting: any) => {
@@ -85,11 +86,11 @@ export function POSInterface() {
         items: (order.items || order.orderItems || []).map((item: any) => ({
           name: item.menuItem?.name || item.name || 'Item',
           qty: item.quantity,
-          price: item.price || item.menuItem?.price || 0,
+          price: Number(item.price || item.menuItem?.price || 0),
         })),
-        subtotal: order.subtotal || 0,
-        tax: order.taxAmount || order.tax_amount || 0,
-        total: order.total || 0,
+        subtotal: Number(order.subtotal || 0),
+        tax: Number(order.taxAmount || order.tax_amount || 0),
+        total: Number(order.total || 0),
         paymentMethod: order.payment?.paymentMethod || order.payment?.payment_method || 'Cash',
         qrCode: order.orderNumber || order.order_number,
       };

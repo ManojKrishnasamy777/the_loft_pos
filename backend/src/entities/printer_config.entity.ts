@@ -17,6 +17,12 @@ export class PrinterConfig {
     @Column({ type: 'varchar', length: 255, nullable: true })
     usb_identifier: string | null;
 
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    product_id: string | null;
+
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    vendor_id: string | null;
+
     @Column({ type: 'varchar', length: 50, nullable: true })
     network_ip: string | null;
 

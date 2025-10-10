@@ -7,59 +7,64 @@ import { UpdatePrinterConfigDto } from './dto/update-printer-config.dto';
 
 @Injectable()
 export class PrinterConfigService {
-  constructor(
-    @InjectRepository(PrinterConfig)
-    private printerRepo: Repository<PrinterConfig>,
-  ) {}
+    constructor(
+        @InjectRepository(PrinterConfig)
+        private printerRepo: Repository<PrinterConfig>,
+    ) { }
 
-  async create(createDto: CreatePrinterConfigDto): Promise<PrinterConfig> {
-    if (createDto.is_default) {
-      await this.printerRepo.update({}, { is_default: false });
+    async create(createDto: CreatePrinterConfigDto): Promise<PrinterConfig> {
+        // if (createDto.is_default) {
+        //   await this.printerRepo.update({}, { is_default: false });
+        // }
+
+        const printer = this.printerRepo.create(createDto);
+        return this.printerRepo.save(printer);
     }
 
-    const printer = this.printerRepo.create(createDto);
-    return this.printerRepo.save(printer);
-  }
-
-  async findAll(): Promise<PrinterConfig[]> {
-    return this.printerRepo.find({ order: { is_default: 'DESC', id: 'ASC' } });
-  }
-
-  async findOne(id: number): Promise<PrinterConfig> {
-    const printer = await this.printerRepo.findOne({ where: { id } });
-    if (!printer) {
-      throw new NotFoundException(`Printer with ID ${id} not found`);
-    }
-    return printer;
-  }
-
-  async findDefault(): Promise<PrinterConfig> {
-    const printer = await this.printerRepo.findOne({ where: { is_default: true } });
-    if (!printer) {
-      throw new NotFoundException('No default printer configured');
-    }
-    return printer;
-  }
-
-  async update(id: number, updateDto: UpdatePrinterConfigDto): Promise<PrinterConfig> {
-    const printer = await this.findOne(id);
-
-    if (updateDto.is_default) {
-      await this.printerRepo.update({}, { is_default: false });
+    async findAll(): Promise<PrinterConfig[]> {
+        return this.printerRepo.find({ order: { is_default: 'DESC', id: 'ASC' } });
     }
 
-    Object.assign(printer, updateDto);
-    return this.printerRepo.save(printer);
-  }
+    async findOne(id: number): Promise<PrinterConfig> {
+        const printer = await this.printerRepo.findOne({ where: { id } });
+        if (!printer) {
+            throw new NotFoundException(`Printer with ID ${id} not found`);
+        }
+        return printer;
+    }
 
-  async remove(id: number): Promise<void> {
-    const printer = await this.findOne(id);
-    await this.printerRepo.remove(printer);
-  }
+    async findDefault(): Promise<PrinterConfig> {
+        const printer = await this.printerRepo.findOne({ where: { is_default: true } });
+        if (!printer) {
+            throw new NotFoundException('No default printer configured');
+        }
+        return printer;
+    }
 
-  async setDefault(id: number): Promise<PrinterConfig> {
-    await this.printerRepo.update({}, { is_default: false });
-    await this.printerRepo.update({ id }, { is_default: true });
-    return this.findOne(id);
-  }
+    async update(id: number, updateDto: UpdatePrinterConfigDto): Promise<PrinterConfig> {
+        const printer = await this.findOne(id);
+
+        if (!printer) {
+            throw new NotFoundException(`Printer with ID ${id} not found`);
+        }
+
+        Object.assign(printer, updateDto);
+        return this.printerRepo.save(printer);
+    }
+
+    async remove(id: number): Promise<void> {
+        const printer = await this.findOne(id);
+        await this.printerRepo.remove(printer);
+    }
+
+    async setDefault(id: number): Promise<PrinterConfig> {
+        const printers = await this.printerRepo.find();
+        for (const printer of printers) {
+            printer.is_default = printer.id === id;
+        }
+        await this.printerRepo.save(printers);
+        return this.findOne(id);
+    }
+
+
 }
