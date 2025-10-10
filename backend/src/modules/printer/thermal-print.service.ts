@@ -3,9 +3,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrinterConfigService } from './printer-config.service';
 import { PrintReceiptDto } from './dto/print-receipt.dto';
 import * as escpos from 'escpos';
-// Directly import USB constructor
-import { USB } from 'escpos-usb';
 import { Network } from 'escpos-network';
+const usb = require('usb'); // Correct import for Node
 
 @Injectable()
 export class ThermalPrintService {
@@ -13,21 +12,25 @@ export class ThermalPrintService {
 
   constructor(private printerConfigService: PrinterConfigService) { }
 
-  async printReceipt(
-    receipt: PrintReceiptDto,
-  ): Promise<{ success: boolean; message?: string }> {
+  async printReceipt(receipt: PrintReceiptDto): Promise<{ success: boolean; message?: string }> {
     try {
       const config = await this.printerConfigService.findDefault();
       if (!config) throw new Error('No default printer configured.');
 
       this.logger.log(`Printing to: ${config.name} (${config.interface_type})`);
 
-      // Create device
       let device: any;
+
       if (config.interface_type === 'USB') {
-        const VENDOR_ID = config.vendor_id || 0x04b8;
-        const PRODUCT_ID = config.product_id || 0x0202;
-        device = new USB(VENDOR_ID, PRODUCT_ID);
+        // Auto-detect first USB printer
+        const devices = usb.getDeviceList();
+        if (devices.length === 0) throw new Error('No USB printers detected');
+
+        // Optional: filter by known thermal printer classes (0x07 for printer)
+        const printerDevice = devices.find(d => d.deviceDescriptor.bDeviceClass === 0x07) || devices[0];
+        printerDevice.open();
+
+        device = new escpos.USB(printerDevice);
       } else if (config.interface_type === 'NETWORK') {
         device = new Network(config.network_ip, config.network_port || 9100);
       } else {
@@ -39,64 +42,42 @@ export class ThermalPrintService {
       await new Promise<void>((resolve, reject) => {
         device.open((err: any) => {
           if (err) return reject(err);
-
           try {
-            // Header
-            printer
-              .align('CT')
-              .style('B')
-              .size(2, 2)
-              .text(receipt.storeName || '')
-              .size(1, 1)
-              .style('NORMAL')
-              .text(receipt.address || '')
-              .text('');
+            printer.align('CT').style('B').size(2, 2).text(receipt.storeName || '');
+            printer.size(1, 1).style('NORMAL').text(receipt.address || '').text('');
 
-            // Order info
             printer.align('LT');
             printer.text(`Order: ${receipt.orderNumber || ''}`);
             printer.text(`Customer: ${receipt.customerName || ''}`);
             printer.text(`Date: ${new Date().toLocaleString('en-IN')}`);
             printer.text('--------------------------------');
 
-            // Items header
             printer.text(this.padColumns(['ITEM', 'QTY', 'PRICE', 'TOTAL'], [20, 6, 8, 8]));
-
-            // Items
-            (receipt.items || []).forEach((item) => {
+            (receipt.items || []).forEach(item => {
               const name = String(item.name || '').slice(0, 20);
               const qty = String(item.qty || 0);
               const price = (item.price || 0).toFixed(2);
               const total = ((item.qty || 0) * (item.price || 0)).toFixed(2);
               printer.text(this.padColumns([name, qty, `₹${price}`, `₹${total}`], [20, 6, 8, 8]));
             });
-
             printer.text('--------------------------------');
 
-            // Totals
             printer.text(this.padRightLabelValue('Subtotal', `₹${receipt.subtotal.toFixed(2)}`, 42));
             printer.text(this.padRightLabelValue('Tax', `₹${receipt.tax.toFixed(2)}`, 42));
             printer.style('B');
             printer.text(this.padRightLabelValue('TOTAL', `₹${receipt.total.toFixed(2)}`, 42));
             printer.style('NORMAL');
 
-            printer.text(`Payment: ${receipt.paymentMethod || ''}`);
-            printer.text('');
+            printer.text(`Payment: ${receipt.paymentMethod || ''}`).text('');
 
-            // QR code
             if (receipt.qrCode) {
               printer.align('CT');
-              printer.qr(receipt.qrCode, { model: 2, size: 6, error: 'M' });
-              printer.text('');
+              printer.qr(receipt.qrCode, { model: 2, size: 6, error: 'M' }).text('');
             }
 
-            // Footer
-            printer.align('CT');
-            printer.text('Thank you for your visit!');
-            printer.text('');
-            printer.feed(3);
-            printer.cut();
-            printer.close();
+            printer.align('CT').text('Thank you for your visit!').text('');
+            printer.feed(3).cut().close();
+
             resolve();
           } catch (e) {
             reject(e);

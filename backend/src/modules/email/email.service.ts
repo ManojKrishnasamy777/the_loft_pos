@@ -143,6 +143,7 @@ export class EmailService {
               <p style="margin: 5px 0;"><strong>Order Number:</strong> ${orderData.orderNumber}</p>
               <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date(orderData.createdAt).toLocaleString()}</p>
               <p style="margin: 5px 0;"><strong>Payment Method:</strong> ${orderData.paymentMethod.toUpperCase()}</p>
+              <p style="margin: 5px 0;"><strong>Screen:</strong> ${orderData.screenName.toUpperCase()}</p>
             </div>
 
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">

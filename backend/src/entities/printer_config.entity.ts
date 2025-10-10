@@ -18,10 +18,10 @@ export class PrinterConfig {
     usb_identifier: string | null;
 
     @Column({ type: 'varchar', length: 255, nullable: true })
-    product_id: string | null;
+    product_id: number | null;
 
     @Column({ type: 'varchar', length: 255, nullable: true })
-    vendor_id: string | null;
+    vendor_id: number | null;
 
     @Column({ type: 'varchar', length: 50, nullable: true })
     network_ip: string | null;

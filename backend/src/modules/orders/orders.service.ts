@@ -226,7 +226,9 @@ export class OrdersService {
     try {
       const orderData = {
         orderNumber: order.orderNumber,
-        customerName: order.customerName || 'Customer',
+        customerName: order.customerName || order.customer.name,
+        email: order.customerEmail || order.customer.email,
+        screenName: order.screen?.name,
         total: order.total,
         items: order.items.map(item => ({
           name: item.menuItem.name,
@@ -237,7 +239,7 @@ export class OrdersService {
         createdAt: order.createdAt,
       };
 
-      let res = await this.emailService.sendOrderConfirmation(orderData, order.customerEmail);
+      let res = await this.emailService.sendOrderConfirmation(orderData, orderData.email);
       console.log('Email sent response:', res);
     } catch (error) {
       console.error('Error sending order confirmation email:', error);
