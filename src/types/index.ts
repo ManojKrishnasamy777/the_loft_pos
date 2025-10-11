@@ -29,7 +29,6 @@ export interface MenuItem {
   category: Category;
   isActive: boolean;
   image?: string;
-  taxRate: number;
 }
 
 export interface Category {

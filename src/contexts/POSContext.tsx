@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiClient } from '../config/api';
 import { MenuItem, OrderItem, Order, PaymentMethod, TaxConfiguration } from '../types';
 import { EmailService } from '../services/emailService';
@@ -31,17 +31,25 @@ interface POSContextType {
 
 const POSContext = createContext<POSContextType | undefined>(undefined);
 
-// Mock tax configuration
-const mockTaxConfig: TaxConfiguration = {
-  id: '1',
-  name: 'GST',
-  rate: 0.18, // 18%
-  isActive: true,
-  isDefault: true
-};
-
 export function POSProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [globalTaxRate, setGlobalTaxRate] = useState<number>(0.18);
+
+  useEffect(() => {
+    loadTaxRate();
+  }, []);
+
+  const loadTaxRate = async () => {
+    try {
+      const settings = await apiClient.getSettings();
+      const taxRateSetting = settings.find((s: any) => s.key === 'tax_rate');
+      if (taxRateSetting) {
+        setGlobalTaxRate(parseFloat(taxRateSetting.value));
+      }
+    } catch (error) {
+      console.error('Failed to load tax rate:', error);
+    }
+  };
 
   const addToCart = (item: MenuItem) => {
     setCart(prevCart => {
@@ -87,10 +95,10 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
       (sum, item) => sum + (item.menuItem.price * item.quantity),
       0
     );
-    
-    const taxAmount = subtotal * mockTaxConfig.rate;
+
+    const taxAmount = subtotal * globalTaxRate;
     const total = subtotal + taxAmount;
-    
+
     return { subtotal, taxAmount, total };
   };
 

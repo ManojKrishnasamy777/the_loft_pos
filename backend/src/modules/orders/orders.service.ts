@@ -9,6 +9,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderFilterDto } from './dto/order-filter.dto';
 import { EmailService } from '../email/email.service';
+import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
 export class OrdersService {
@@ -22,6 +23,7 @@ export class OrdersService {
     @InjectRepository(Customer)
     private customerRepository: Repository<Customer>,
     private emailService: EmailService,
+    private settingsService: SettingsService,
   ) { }
 
   async findAll(filterDto?: OrderFilterDto): Promise<{ orders: Order[]; total: number }> {
@@ -80,8 +82,11 @@ export class OrdersService {
 
   async create(createOrderDto: CreateOrderDto, userId: string): Promise<Order> {
     const orderNumber = await this.generateOrderNumber();
+
+    const globalTaxRateStr = await this.settingsService.getValue('tax_rate', '0.18');
+    const globalTaxRate = parseFloat(globalTaxRateStr);
+
     let subtotal = 0;
-    let taxAmount = 0;
     const orderItems: Partial<OrderItem>[] = [];
 
     for (const item of createOrderDto.items) {
@@ -93,7 +98,7 @@ export class OrdersService {
       }
 
       const itemSubtotal = menuItem.price * item.quantity;
-      const itemTaxAmount = itemSubtotal * menuItem.taxRate;
+      const itemTaxAmount = itemSubtotal * globalTaxRate;
       const itemTotal = itemSubtotal + itemTaxAmount;
 
       orderItems.push({
@@ -106,9 +111,9 @@ export class OrdersService {
       });
 
       subtotal += itemSubtotal;
-      taxAmount += itemTaxAmount;
     }
 
+    const taxAmount = subtotal * globalTaxRate;
     const total = subtotal + taxAmount;
 
     const order = this.orderRepository.create({

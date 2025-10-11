@@ -38,9 +38,6 @@ export class MenuItem {
   @Column({ nullable: true })
   image: string;
 
-  @Column({ type: 'decimal', precision: 5, scale: 4, default: 0.18 })
-  taxRate: number;
-
   @Column({ default: 0 })
   sortOrder: number;
 

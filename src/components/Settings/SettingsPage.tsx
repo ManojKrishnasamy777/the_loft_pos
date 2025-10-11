@@ -10,7 +10,8 @@ import {
   Database,
   Monitor,
   Mail,
-  Key
+  Key,
+  MessageCircle
 } from 'lucide-react';
 import { PaymentSettings } from './PaymentSettings';
 import { PrinterSettings } from './PrinterSettings';
@@ -23,6 +24,7 @@ import { ScreenManagement } from '../Screens/screens';
 import EmailSettings from './EmailSettings';
 import { RoleManagement } from './RoleManagement';
 import { PermissionManagement } from './PermissionManagement';
+import { WhatsAppMessaging } from './WhatsAppMessaging';
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState('payment');
@@ -36,6 +38,7 @@ export function SettingsPage() {
     { id: 'permissions', name: 'Permissions', icon: Key },
     { id: 'screen', name: 'Screens', icon: Monitor },
     { id: 'email', name: 'Email Configuration', icon: Mail },
+    { id: 'whatsapp', name: 'WhatsApp Messaging', icon: MessageCircle },
     { id: 'security', name: 'Security', icon: Shield },
     { id: 'notifications', name: 'Notifications', icon: Bell },
     { id: 'backup', name: 'Backup & Restore', icon: Database }
@@ -59,6 +62,8 @@ export function SettingsPage() {
         return <ScreenManagement />;
       case 'email':
         return <EmailSettings />;
+      case 'whatsapp':
+        return <WhatsAppMessaging />;
       case 'security':
         return <SecuritySettings />;
       case 'notifications':
