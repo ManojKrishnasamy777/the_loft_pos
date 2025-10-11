@@ -41,6 +41,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
 
   const loadTaxRate = async () => {
     try {
+      debugger
       const settings = await apiClient.getSettings();
       const taxRateSetting = settings.find((s: any) => s.key === 'tax_rate');
       if (taxRateSetting) {
@@ -54,7 +55,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
   const addToCart = (item: MenuItem) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(cartItem => cartItem.menuItem.id === item.id);
-      
+
       if (existingItem) {
         return prevCart.map(cartItem =>
           cartItem.menuItem.id === item.id
@@ -62,7 +63,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
             : cartItem
         );
       }
-      
+
       return [...prevCart, { menuItem: item, quantity: 1 }];
     });
   };
@@ -76,7 +77,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
       removeFromCart(itemId);
       return;
     }
-    
+
     setCart(prevCart =>
       prevCart.map(item =>
         item.menuItem.id === itemId

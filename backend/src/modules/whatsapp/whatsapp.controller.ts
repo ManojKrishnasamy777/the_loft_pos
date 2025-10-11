@@ -12,11 +12,12 @@ import { ApiTags, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { WhatsAppService } from './whatsapp.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { SendBulkMessageDto } from './dto/send-bulk-message.dto';
+import { Express } from 'express'; // ✅ FIX ADDED
 
 @ApiTags('whatsapp')
 @Controller('whatsapp')
 export class WhatsAppController {
-  constructor(private readonly whatsappService: WhatsAppService) {}
+  constructor(private readonly whatsappService: WhatsAppService) { }
 
   @Get('templates')
   async getTemplates() {
@@ -64,22 +65,15 @@ export class WhatsAppController {
     schema: {
       type: 'object',
       properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-        templateName: {
-          type: 'string',
-        },
-        languageCode: {
-          type: 'string',
-        },
+        file: { type: 'string', format: 'binary' },
+        templateName: { type: 'string' },
+        languageCode: { type: 'string' },
       },
     },
   })
   @UseInterceptors(FileInterceptor('file'))
   async sendBulkFromCSV(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,  // ✅ FIXED TYPE
     @Body('templateName') templateName: string,
     @Body('languageCode') languageCode?: string,
   ) {
@@ -117,22 +111,15 @@ export class WhatsAppController {
     schema: {
       type: 'object',
       properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-        templateName: {
-          type: 'string',
-        },
-        languageCode: {
-          type: 'string',
-        },
+        file: { type: 'string', format: 'binary' },
+        templateName: { type: 'string' },
+        languageCode: { type: 'string' },
       },
     },
   })
   @UseInterceptors(FileInterceptor('file'))
   async sendBulkFromExcel(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,  // ✅ FIXED TYPE
     @Body('templateName') templateName: string,
     @Body('languageCode') languageCode?: string,
   ) {
