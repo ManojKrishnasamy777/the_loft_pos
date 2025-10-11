@@ -152,7 +152,7 @@ export class OrdersService {
 
     const finalOrder = await this.findById(savedOrder.id);
 
-    if (finalOrder.customerEmail) {
+    if (finalOrder.customerEmail || finalOrder.customer?.email) {
       try {
         await this.sendOrderConfirmationEmail(finalOrder);
       } catch (error) {

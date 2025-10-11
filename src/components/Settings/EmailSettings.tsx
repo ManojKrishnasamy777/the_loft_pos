@@ -55,6 +55,7 @@ export default function EmailSettings() {
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    debugger
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -68,6 +69,7 @@ export default function EmailSettings() {
   };
 
   const handleSave = async () => {
+    debugger
     setIsSaving(true);
     setError('');
     setTestResult(null);
@@ -149,11 +151,10 @@ export default function EmailSettings() {
 
       {testResult && (
         <div
-          className={`border rounded-lg p-4 flex items-center gap-3 ${
-            testResult.success
-              ? 'bg-green-50 border-green-200'
-              : 'bg-red-50 border-red-200'
-          }`}
+          className={`border rounded-lg p-4 flex items-center gap-3 ${testResult.success
+            ? 'bg-green-50 border-green-200'
+            : 'bg-red-50 border-red-200'
+            }`}
         >
           {testResult.success ? (
             <CheckCircle className="w-5 h-5 text-green-600" />
