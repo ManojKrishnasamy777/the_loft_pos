@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../../config/api';
+import toast from 'react-hot-toast';
 import {
   Calendar,
   Download,
@@ -8,7 +9,9 @@ import {
   DollarSign,
   ShoppingBag,
   Users,
-  BarChart3
+  BarChart3,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 
 export function ReportsPage() {
@@ -16,18 +19,25 @@ export function ReportsPage() {
   const [selectedReport, setSelectedReport] = useState('sales');
   const [reportData, setReportData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
 
   useEffect(() => {
     loadReportData();
-  }, [selectedReport, dateRange]);
+  }, [selectedReport, dateRange, paymentMethodFilter]);
 
   const loadReportData = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const params = {
+      const params: any = {
         ...(dateRange.from && { dateFrom: dateRange.from }),
         ...(dateRange.to && { dateTo: dateRange.to }),
       };
+
+      if (paymentMethodFilter) {
+        params.paymentMethod = paymentMethodFilter;
+      }
 
       let data;
       switch (selectedReport) {
@@ -48,8 +58,10 @@ export function ReportsPage() {
       }
 
       setReportData(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load report data:', error);
+      setError(error?.message || 'Failed to load report data');
+      toast.error('Failed to load report data');
     } finally {
       setLoading(false);
     }
@@ -62,20 +74,6 @@ export function ReportsPage() {
     { id: 'trends', name: 'Sales Trends', icon: TrendingUp }
   ];
 
-  const salesData = [
-    { date: '2024-01-15', orders: 45, revenue: 8250, avgOrder: 183 },
-    { date: '2024-01-14', orders: 52, revenue: 9340, avgOrder: 179 },
-    { date: '2024-01-13', orders: 38, revenue: 6890, avgOrder: 181 },
-    { date: '2024-01-12', orders: 41, revenue: 7520, avgOrder: 183 },
-    { date: '2024-01-11', orders: 47, revenue: 8670, avgOrder: 184 }
-  ];
-
-  const topItems = [
-    { name: 'Popcorn', quantity: 145, revenue: 11600, percentage: 22 },
-    { name: 'Filter Coffee', quantity: 128, revenue: 3840, percentage: 18 },
-    { name: 'Chicken Biryani', quantity: 89, revenue: 19580, percentage: 15 },
-    { name: 'Nachos with Cheese', quantity: 76, revenue: 9120, percentage: 12 }
-  ];
 
   const handleExport = async () => {
     try {
@@ -128,11 +126,16 @@ export function ReportsPage() {
 
               <div className="flex items-center space-x-2">
                 <Filter className="h-5 w-5 text-gray-400" />
-                <select className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-amber-500 focus:border-amber-500">
+                <select
+                  value={paymentMethodFilter}
+                  onChange={(e) => setPaymentMethodFilter(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-amber-500 focus:border-amber-500"
+                >
                   <option value="">All Payment Methods</option>
                   <option value="cash">Cash</option>
                   <option value="card">Card</option>
                   <option value="upi">UPI</option>
+                  <option value="razorpay">Razorpay</option>
                 </select>
               </div>
             </div>
@@ -239,82 +242,206 @@ export function ReportsPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Daily Sales Chart */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5 text-amber-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Daily Sales Trend</h2>
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <div className="flex items-center space-x-3">
+              <AlertCircle className="h-6 w-6 text-red-600" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-red-900">Error Loading Report</h3>
+                <p className="text-red-700">{error}</p>
               </div>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {(reportData?.salesByHour || []).slice(0, 5).map((hour, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-900">
-                          {hour.hour}:00 - {hour.hour + 1}:00
-                        </span>
-                        <span className="text-sm text-gray-600">₹{hour.sales.toFixed(2)}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-amber-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min((hour.sales / 1000) * 100, 100)}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between mt-1 text-xs text-gray-500">
-                        <span>{hour.orderCount} orders</span>
-                        <span>Avg: ₹{hour.orderCount > 0 ? (hour.sales / hour.orderCount).toFixed(0) : '0'}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <button
+                onClick={loadReportData}
+                className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span>Retry</span>
+              </button>
             </div>
           </div>
+        )}
 
-          {/* Top Selling Items */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center space-x-2">
-                <ShoppingBag className="h-5 w-5 text-amber-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Top Selling Items</h2>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="space-y-6">
-                {(reportData?.topItems || []).slice(0, 4).map((item, index) => (
-                  <div key={item.item?.name || index} className="flex items-center space-x-4">
-                    <div className="bg-amber-100 text-amber-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-medium text-gray-900">{item.item?.name || 'Unknown Item'}</h3>
-                          <p className="text-sm text-gray-600">{item.quantity} sold</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium text-gray-900">₹{item.revenue}</p>
-                          <p className="text-sm text-gray-600">{item.percentage}%</p>
-                        </div>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min((item.revenue / (reportData?.totalSales || 1)) * 100, 100)}%` }}
-                        />
-                      </div>
-                    </div>
+        {!loading && !error && reportData && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Sales by Hour Chart */}
+            {selectedReport === 'sales' && reportData?.salesByHour && reportData.salesByHour.length > 0 && (
+              <div className="bg-white rounded-lg shadow">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-center space-x-2">
+                    <BarChart3 className="h-5 w-5 text-amber-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">Hourly Sales</h2>
                   </div>
-                ))}
+                </div>
+                <div className="p-6">
+                  <div className="space-y-4">
+                    {reportData.salesByHour.slice(0, 6).map((hour: any, index: number) => (
+                      <div key={index} className="flex items-center">
+                        <div className="w-20 text-sm font-medium text-gray-700">
+                          {hour.hour}:00
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-1 bg-gray-200 rounded-full h-3">
+                              <div
+                                className="bg-gradient-to-r from-amber-500 to-amber-600 h-3 rounded-full transition-all duration-500"
+                                style={{ width: `${Math.min((hour.sales / Math.max(...reportData.salesByHour.map((h: any) => h.sales))) * 100, 100)}%` }}
+                              />
+                            </div>
+                            <div className="w-32 text-right">
+                              <p className="text-sm font-medium text-gray-900">₹{Number(hour.sales || 0).toFixed(2)}</p>
+                              <p className="text-xs text-gray-500">{hour.orderCount} orders</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Top Selling Items */}
+            {(selectedReport === 'sales' || selectedReport === 'items') && reportData?.topItems && reportData.topItems.length > 0 && (
+              <div className="bg-white rounded-lg shadow">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-center space-x-2">
+                    <ShoppingBag className="h-5 w-5 text-amber-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">Top Selling Items</h2>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-6">
+                    {reportData.topItems.slice(0, 5).map((item: any, index: number) => (
+                      <div key={item.item?.id || index} className="flex items-center space-x-4">
+                        <div className="bg-amber-100 text-amber-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-medium text-gray-900">{item.item?.name || item.menuItem?.name || 'Unknown Item'}</h3>
+                              <p className="text-sm text-gray-600">{item.quantity || item.totalQuantity} sold</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium text-gray-900">₹{Number(item.revenue || item.totalRevenue || 0).toFixed(2)}</p>
+                            </div>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min(((item.revenue || item.totalRevenue) / (reportData?.totalSales || 1)) * 100, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Daily Sales Trend */}
+            {selectedReport === 'trends' && Array.isArray(reportData) && reportData.length > 0 && (
+              <div className="bg-white rounded-lg shadow lg:col-span-2">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-5 w-5 text-amber-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">Daily Sales Trend</h2>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-3">
+                    {reportData.slice(-10).map((day: any) => (
+                      <div key={day.date} className="flex items-center">
+                        <div className="w-28 text-sm font-medium text-gray-700">
+                          {new Date(day.date).toLocaleDateString()}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-1 bg-gray-200 rounded-full h-3">
+                              <div
+                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500"
+                                style={{ width: `${Math.min((day.sales / Math.max(...reportData.map((d: any) => d.sales))) * 100, 100)}%` }}
+                              />
+                            </div>
+                            <div className="w-32 text-right">
+                              <p className="text-sm font-medium text-gray-900">₹{Number(day.sales || 0).toFixed(2)}</p>
+                              <p className="text-xs text-gray-500">{day.orderCount} orders</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Customer Analytics */}
+            {selectedReport === 'customers' && reportData?.topCustomers && reportData.topCustomers.length > 0 && (
+              <div className="bg-white rounded-lg shadow lg:col-span-2">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-center space-x-2">
+                    <Users className="h-5 w-5 text-amber-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">Top Customers</h2>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Customer</th>
+                          <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Email</th>
+                          <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Orders</th>
+                          <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Total Spent</th>
+                          <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Avg Order</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {reportData.topCustomers.slice(0, 10).map((customer: any, index: number) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="py-3 px-4 text-sm text-gray-900">{customer.customerName || 'Walk-in'}</td>
+                            <td className="py-3 px-4 text-sm text-gray-600">{customer.customerEmail || '-'}</td>
+                            <td className="py-3 px-4 text-sm text-right text-gray-900">{customer.orderCount}</td>
+                            <td className="py-3 px-4 text-sm text-right font-medium text-gray-900">₹{Number(customer.totalSpent || 0).toFixed(2)}</td>
+                            <td className="py-3 px-4 text-sm text-right text-gray-600">₹{Number(customer.averageOrderValue || 0).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!loading && !error && reportData && (
+          selectedReport === 'sales' && reportData.salesByCategory && reportData.salesByCategory.length > 0 && (
+            <div className="mt-8 bg-white rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center space-x-2">
+                  <BarChart3 className="h-5 w-5 text-amber-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">Sales by Category</h2>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {reportData.salesByCategory.map((cat: any) => (
+                    <div key={cat.category?.id} className="border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 mb-2">{cat.category?.name || 'Unknown'}</h3>
+                      <div className="space-y-1">
+                        <p className="text-2xl font-bold text-amber-600">₹{Number(cat.sales || 0).toFixed(2)}</p>
+                        <p className="text-sm text-gray-600">{cat.orderCount} orders</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          )
+        )}
       </div>
     </div>
   );
