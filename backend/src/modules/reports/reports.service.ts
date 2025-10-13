@@ -47,8 +47,6 @@ export class ReportsService {
 
     if (status) {
       queryBuilder.andWhere('order.status = :status', { status });
-    } else {
-      queryBuilder.andWhere('order.status = :status', { status: OrderStatus.COMPLETED });
     }
 
     const orders = await queryBuilder.getMany();
@@ -147,13 +145,16 @@ export class ReportsService {
   }
 
   async getItemPerformanceReport(filterDto: ReportFilterDto) {
-    const { dateFrom, dateTo } = filterDto;
+    const { dateFrom, dateTo, status } = filterDto;
 
     const queryBuilder = this.orderItemRepository.createQueryBuilder('orderItem')
       .leftJoinAndSelect('orderItem.menuItem', 'menuItem')
       .leftJoinAndSelect('menuItem.category', 'category')
-      .leftJoinAndSelect('orderItem.order', 'order')
-      .where('order.status = :status', { status: OrderStatus.COMPLETED });
+      .leftJoinAndSelect('orderItem.order', 'order');
+
+    if (status) {
+      queryBuilder.where('order.status = :status', { status });
+    }
 
     if (dateFrom && dateTo) {
       queryBuilder.andWhere('order.createdAt BETWEEN :dateFrom AND :dateTo', {
@@ -189,20 +190,25 @@ export class ReportsService {
   }
 
   async getDailySalesReport(filterDto: ReportFilterDto) {
-    const { dateFrom, dateTo } = filterDto;
+    const { dateFrom, dateTo, status } = filterDto;
 
     const startDate = dateFrom ? new Date(dateFrom) : new Date();
     const endDate = dateTo ? new Date(dateTo) : new Date();
 
     if (!dateFrom) {
-      startDate.setDate(startDate.getDate() - 30); // Last 30 days by default
+      startDate.setDate(startDate.getDate() - 30);
+    }
+
+    const whereConditions: any = {
+      createdAt: Between(startDate, endDate),
+    };
+
+    if (status) {
+      whereConditions.status = status;
     }
 
     const orders = await this.orderRepository.find({
-      where: {
-        createdAt: Between(startDate, endDate),
-        status: OrderStatus.COMPLETED,
-      },
+      where: whereConditions,
       order: { createdAt: 'ASC' },
     });
 
@@ -227,13 +233,16 @@ export class ReportsService {
   }
 
   async getCustomerAnalytics(filterDto: ReportFilterDto) {
-    const { dateFrom, dateTo } = filterDto;
+    const { dateFrom, dateTo, status } = filterDto;
 
     const queryBuilder = this.orderRepository.createQueryBuilder('order')
       .leftJoinAndSelect('order.customer', 'customer')
       .leftJoinAndSelect('order.screen', 'screen')
-      .where('order.status = :status', { status: OrderStatus.COMPLETED })
-      .andWhere('(order.customerEmail IS NOT NULL OR order.customerId IS NOT NULL)');
+      .where('(order.customerEmail IS NOT NULL OR order.customerId IS NOT NULL)');
+
+    if (status) {
+      queryBuilder.andWhere('order.status = :status', { status });
+    }
 
     if (dateFrom && dateTo) {
       queryBuilder.andWhere('order.createdAt BETWEEN :dateFrom AND :dateTo', {
@@ -307,23 +316,121 @@ export class ReportsService {
   }
 
   private convertToCSV(data: any, reportType: string): string {
-    // This is a simplified CSV conversion
-    // In a real application, you might want to use a proper CSV library
+    const escapeCSV = (value: any): string => {
+      if (value == null) return '';
+      const stringValue = String(value);
+      if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+      }
+      return stringValue;
+    };
 
     if (reportType === 'sales') {
-      let csv = 'Date,Total Sales,Total Orders,Average Order Value\n';
-      csv += `${new Date().toISOString().split('T')[0]},${data.totalSales},${data.totalOrders},${data.averageOrderValue}\n`;
+      let csv = 'Sales Report\n\n';
+      csv += 'Summary\n';
+      csv += 'Metric,Value\n';
+      csv += `Total Sales,₹${(data.totalSales || 0).toFixed(2)}\n`;
+      csv += `Total Orders,${data.totalOrders || 0}\n`;
+      csv += `Average Order Value,₹${(data.averageOrderValue || 0).toFixed(2)}\n`;
+      csv += `Generated On,${new Date().toISOString()}\n\n`;
 
-      csv += '\nTop Items\n';
-      csv += 'Item Name,Quantity Sold,Revenue\n';
-      data.topItems.forEach(item => {
-        csv += `${item.item.name},${item.quantity},${item.revenue}\n`;
-      });
+      if (data.topItems && data.topItems.length > 0) {
+        csv += 'Top Selling Items\n';
+        csv += 'Rank,Item Name,Category,Quantity Sold,Revenue\n';
+        data.topItems.forEach((item, index) => {
+          csv += `${index + 1},${escapeCSV(item.item.name)},${escapeCSV(item.item.category?.name || 'N/A')},${item.quantity},₹${item.revenue.toFixed(2)}\n`;
+        });
+        csv += '\n';
+      }
+
+      if (data.salesByCategory && data.salesByCategory.length > 0) {
+        csv += 'Sales by Category\n';
+        csv += 'Category,Sales,Order Count\n';
+        data.salesByCategory.forEach(cat => {
+          csv += `${escapeCSV(cat.category?.name || 'Unknown')},₹${cat.sales.toFixed(2)},${cat.orderCount}\n`;
+        });
+        csv += '\n';
+      }
+
+      if (data.salesByPaymentMethod && data.salesByPaymentMethod.length > 0) {
+        csv += 'Sales by Payment Method\n';
+        csv += 'Payment Method,Sales,Order Count\n';
+        data.salesByPaymentMethod.forEach(pm => {
+          csv += `${escapeCSV(pm.method)},₹${pm.sales.toFixed(2)},${pm.orderCount}\n`;
+        });
+        csv += '\n';
+      }
 
       return csv;
     }
 
-    // Add other report type conversions as needed
+    if (reportType === 'items') {
+      let csv = 'Item Performance Report\n\n';
+      csv += 'Generated On,' + new Date().toISOString() + '\n\n';
+      csv += 'Item Name,Category,Total Quantity,Total Revenue,Order Count,Average Price\n';
+
+      if (Array.isArray(data)) {
+        data.forEach(item => {
+          csv += `${escapeCSV(item.menuItem?.name || 'Unknown')},`;
+          csv += `${escapeCSV(item.menuItem?.category?.name || 'N/A')},`;
+          csv += `${item.totalQuantity || 0},`;
+          csv += `₹${(item.totalRevenue || 0).toFixed(2)},`;
+          csv += `${item.orderCount || 0},`;
+          csv += `₹${(item.averagePrice || 0).toFixed(2)}\n`;
+        });
+      }
+
+      return csv;
+    }
+
+    if (reportType === 'daily') {
+      let csv = 'Daily Sales Report\n\n';
+      csv += 'Generated On,' + new Date().toISOString() + '\n\n';
+      csv += 'Date,Sales,Order Count\n';
+
+      if (Array.isArray(data)) {
+        data.forEach(day => {
+          csv += `${day.date},₹${(day.sales || 0).toFixed(2)},${day.orderCount || 0}\n`;
+        });
+
+        const totalSales = data.reduce((sum, day) => sum + (day.sales || 0), 0);
+        const totalOrders = data.reduce((sum, day) => sum + (day.orderCount || 0), 0);
+        csv += '\nTotals\n';
+        csv += `Total Sales,₹${totalSales.toFixed(2)}\n`;
+        csv += `Total Orders,${totalOrders}\n`;
+        csv += `Average Daily Sales,₹${(totalSales / data.length).toFixed(2)}\n`;
+      }
+
+      return csv;
+    }
+
+    if (reportType === 'customers') {
+      let csv = 'Customer Analytics Report\n\n';
+      csv += 'Summary\n';
+      csv += 'Metric,Value\n';
+      csv += `Total Customers,${data.totalCustomers || 0}\n`;
+      csv += `Repeat Customers,${data.repeatCustomers || 0}\n`;
+      csv += `Average Order Value,₹${(data.averageOrderValue || 0).toFixed(2)}\n`;
+      csv += `Generated On,${new Date().toISOString()}\n\n`;
+
+      if (data.topCustomers && data.topCustomers.length > 0) {
+        csv += 'Top Customers\n';
+        csv += 'Customer Name,Email,Phone,Order Count,Total Spent,Average Order Value,First Order,Last Order\n';
+        data.topCustomers.forEach(customer => {
+          csv += `${escapeCSV(customer.customerName || 'N/A')},`;
+          csv += `${escapeCSV(customer.customerEmail || 'N/A')},`;
+          csv += `${escapeCSV(customer.customerPhone || 'N/A')},`;
+          csv += `${customer.orderCount || 0},`;
+          csv += `₹${(customer.totalSpent || 0).toFixed(2)},`;
+          csv += `₹${(customer.averageOrderValue || 0).toFixed(2)},`;
+          csv += `${customer.firstOrderDate ? new Date(customer.firstOrderDate).toLocaleDateString() : 'N/A'},`;
+          csv += `${customer.lastOrderDate ? new Date(customer.lastOrderDate).toLocaleDateString() : 'N/A'}\n`;
+        });
+      }
+
+      return csv;
+    }
+
     return JSON.stringify(data, null, 2);
   }
 }

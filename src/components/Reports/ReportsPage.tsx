@@ -21,10 +21,11 @@ export function ReportsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
     loadReportData();
-  }, [selectedReport, dateRange, paymentMethodFilter]);
+  }, [selectedReport, dateRange, paymentMethodFilter, statusFilter]);
 
   const loadReportData = async () => {
     setLoading(true);
@@ -37,6 +38,10 @@ export function ReportsPage() {
 
       if (paymentMethodFilter) {
         params.paymentMethod = paymentMethodFilter;
+      }
+
+      if (statusFilter) {
+        params.status = statusFilter;
       }
 
       let data;
@@ -80,6 +85,8 @@ export function ReportsPage() {
       const params = {
         ...(dateRange.from && { dateFrom: dateRange.from }),
         ...(dateRange.to && { dateTo: dateRange.to }),
+        ...(paymentMethodFilter && { paymentMethod: paymentMethodFilter }),
+        ...(statusFilter && { status: statusFilter }),
       };
 
       const blob = await apiClient.exportReport(selectedReport, params);
@@ -138,6 +145,18 @@ export function ReportsPage() {
                   <option value="razorpay">Razorpay</option>
                 </select>
               </div>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-amber-500 focus:border-amber-500"
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="refunded">Refunded</option>
+              </select>
             </div>
 
             <button

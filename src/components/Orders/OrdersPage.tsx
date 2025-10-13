@@ -40,6 +40,7 @@ export function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [page, setPage] = useState(1);
   const limit = 20;
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -64,6 +65,24 @@ export function OrdersPage() {
     }
   };
 
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    setUpdatingStatus(true);
+    try {
+      await apiClient.updateOrderStatus(orderId, newStatus);
+      toast.success('Order status updated successfully');
+      await loadOrders();
+      if (selectedOrder && selectedOrder.id === orderId) {
+        const updatedOrder = await apiClient.getOrderById(orderId);
+        setSelectedOrder(updatedOrder);
+      }
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      toast.error('Failed to update order status');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -72,6 +91,8 @@ export function OrdersPage() {
         return 'bg-yellow-100 text-yellow-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
+      case 'refunded':
+        return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -85,6 +106,8 @@ export function OrdersPage() {
         return <Clock className="h-4 w-4" />;
       case 'cancelled':
         return <XCircle className="h-4 w-4" />;
+      case 'refunded':
+        return <DollarSign className="h-4 w-4" />;
       default:
         return <Package className="h-4 w-4" />;
     }
@@ -126,6 +149,7 @@ export function OrdersPage() {
                     <option value="pending">Pending</option>
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
+                    <option value="refunded">Refunded</option>
                   </select>
                 </div>
 
@@ -306,13 +330,25 @@ export function OrdersPage() {
                   <p className="text-lg font-semibold text-gray-900">{selectedOrder.orderNumber}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Status</p>
-                  <span
-                    className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}
-                  >
-                    {getStatusIcon(selectedOrder.status)}
-                    <span className="capitalize">{selectedOrder.status}</span>
-                  </span>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Status</p>
+                  <div className="flex items-center space-x-2">
+                    <select
+                      value={selectedOrder.status}
+                      onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value)}
+                      disabled={updatingStatus}
+                      className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-amber-500 focus:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                      <option value="refunded">Refunded</option>
+                    </select>
+                    <span
+                      className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}
+                    >
+                      {getStatusIcon(selectedOrder.status)}
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Customer</p>

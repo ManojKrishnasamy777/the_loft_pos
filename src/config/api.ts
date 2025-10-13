@@ -132,6 +132,13 @@ class ApiClient {
     return this.request<any>(`/orders/stats?${params.toString()}`);
   }
 
+  async updateOrderStatus(orderId: string, status: string) {
+    return this.request<any>(`/orders/${orderId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
   // Payment endpoints
   async createRazorpayOrder(orderId: string) {
     return this.request<any>(`/payments/razorpay/create-order/${orderId}`, {
