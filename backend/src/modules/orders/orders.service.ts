@@ -93,9 +93,7 @@ export class OrdersService {
       const menuItem = await this.menuItemRepository.findOne({
         where: { id: item.menuItemId, isActive: true },
       });
-      if (!menuItem) {
-        throw new BadRequestException(`Menu item ${item.menuItemId} not found or inactive`);
-      }
+      if (!menuItem) throw new BadRequestException(`Menu item ${item.menuItemId} not found or inactive`);
 
       const itemSubtotal = menuItem.price * item.quantity;
       const itemTaxAmount = itemSubtotal * globalTaxRate;
@@ -116,15 +114,33 @@ export class OrdersService {
     const taxAmount = subtotal * globalTaxRate;
     const total = subtotal + taxAmount;
 
+    let customerEmail = '';
+    let customerName = '';
+    let customerPhone = '';
+
+    if (createOrderDto.customerId) {
+      // ✅ fetch customer from DB
+      const customer = await this.customerRepository.findOne({ where: { id: createOrderDto.customerId } });
+      if (!customer) throw new BadRequestException(`Customer ${createOrderDto.customerId} not found`);
+      customerEmail = customer.email;
+      customerName = customer.name;
+      customerPhone = customer.phone;
+    } else {
+      // ✅ take from frontend if no customerId
+      customerEmail = createOrderDto.customerEmail;
+      customerName = createOrderDto.customerName;
+      customerPhone = createOrderDto.customerPhone;
+    }
+
     const order = this.orderRepository.create({
       orderNumber,
       subtotal,
       taxAmount,
       total,
-      customerEmail: createOrderDto.customerEmail,
-      customerName: createOrderDto.customerName,
-      customerPhone: createOrderDto.customerPhone,
-      customerId: createOrderDto.customerId,
+      customerEmail,
+      customerName,
+      customerPhone,
+      customerId: createOrderDto.customerId || null,
       screenId: createOrderDto.screenId,
       paymentMethod: createOrderDto.paymentMethod,
       status: OrderStatus.PENDING,
@@ -135,32 +151,25 @@ export class OrdersService {
     const savedOrder = await this.orderRepository.save(order);
 
     for (const item of orderItems) {
-      const orderItem = this.orderItemRepository.create({
+      await this.orderItemRepository.save({
         ...item,
         orderId: savedOrder.id,
       });
-      await this.orderItemRepository.save(orderItem);
     }
 
+
+    // ✅ update customer stats only if registered
     if (createOrderDto.customerId) {
-      await this.customerRepository.increment(
-        { id: createOrderDto.customerId },
-        'orderCount',
-        1
-      );
-      await this.customerRepository.increment(
-        { id: createOrderDto.customerId },
-        'totalSpent',
-        total
-      );
+      await this.customerRepository.increment({ id: createOrderDto.customerId }, 'orderCount', 1);
+      await this.customerRepository.increment({ id: createOrderDto.customerId }, 'totalSpent', total);
     }
 
     const finalOrder = await this.findById(savedOrder.id);
-
     if (finalOrder.customerEmail || finalOrder.customer?.email) {
       try {
         await this.sendOrderConfirmationEmail(finalOrder);
-      } catch (error) {
+      }
+      catch (error) {
         console.error('Failed to send order confirmation email:', error);
       }
     }
@@ -168,21 +177,59 @@ export class OrdersService {
     return finalOrder;
   }
 
+
   async update(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
     const order = await this.findById(id);
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+
+    let customerEmail = order.customerEmail;
+    let customerName = order.customerName;
+    let customerPhone = order.customerPhone;
+    let customerId = order.customerId;
+
+    // ✅ If customerId is updated
+    if (updateOrderDto.customerId !== undefined) {
+      if (updateOrderDto.customerId) {
+        // Fetch new customer if customerId present
+        const customer = await this.customerRepository.findOne({
+          where: { id: updateOrderDto.customerId },
+        });
+        if (!customer) throw new BadRequestException(`Customer ${updateOrderDto.customerId} not found`);
+        customerId = customer.id;
+        customerEmail = customer.email;
+        customerName = customer.name;
+        customerPhone = customer.phone;
+      } else {
+        // ✅ No customerId → Guest mode
+        customerId = null;
+        customerEmail = updateOrderDto.customerEmail ?? customerEmail;
+        customerName = updateOrderDto.customerName ?? customerName;
+        customerPhone = updateOrderDto.customerPhone ?? customerPhone;
+      }
+    } else {
+      // ✅ If no new customerId provided but guest details changed
+      customerEmail = updateOrderDto.customerEmail ?? customerEmail;
+      customerName = updateOrderDto.customerName ?? customerName;
+      customerPhone = updateOrderDto.customerPhone ?? customerPhone;
+    }
+
+    // ✅ Allowed updates
     const allowedUpdates = {
-      customerEmail: updateOrderDto.customerEmail,
-      customerName: updateOrderDto.customerName,
-      customerPhone: updateOrderDto.customerPhone,
-      status: updateOrderDto.status,
-      metadata: updateOrderDto.metadata,
+      customerId,
+      customerEmail,
+      customerName,
+      customerPhone,
+      status: updateOrderDto.status ?? order.status,
+      metadata: updateOrderDto.metadata ?? order.metadata,
     };
-    Object.keys(allowedUpdates).forEach(
-      key => allowedUpdates[key] === undefined && delete allowedUpdates[key]
-    );
+
     await this.orderRepository.update(id, allowedUpdates);
+
     return this.findById(id);
   }
+
 
   async updateStatus(id: string, status: OrderStatus): Promise<Order> {
     await this.findById(id);

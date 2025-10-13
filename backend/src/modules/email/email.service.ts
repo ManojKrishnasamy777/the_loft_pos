@@ -186,7 +186,7 @@ export class EmailService {
 
     return await this.sendEmail({
       to: customerEmail,
-      subject: `Order Confirmation - ${orderData.orderNumber}`,
+      subject: `BILL - ${orderData.orderNumber}`,
       html,
     });
   }
