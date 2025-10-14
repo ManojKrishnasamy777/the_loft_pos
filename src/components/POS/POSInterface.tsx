@@ -221,14 +221,17 @@ export function POSInterface() {
 
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Customer</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Customer <span className="text-red-500">*</span>
+              </label>
               <div className="flex space-x-2">
                 <select
                   value={selectedCustomer || ''}
                   onChange={(e) => setSelectedCustomer(e.target.value || null)}
+                  required
                   className="flex-1 text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-amber-500 focus:border-amber-500"
                 >
-                  <option value="">Walk-in Customer</option>
+                  <option value="">Select Customer</option>
                   {customers.map(customer => (
                     <option key={customer.id} value={customer.id}>
                       {customer.name} {customer.phone ? `(${customer.phone})` : ''}
@@ -246,10 +249,13 @@ export function POSInterface() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Screen</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Screen <span className="text-red-500">*</span>
+              </label>
               <select
                 value={selectedScreen || ''}
                 onChange={(e) => setSelectedScreen(e.target.value || null)}
+                required
                 className="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-amber-500 focus:border-amber-500"
               >
                 <option value="">Select Screen</option>
@@ -284,7 +290,17 @@ export function POSInterface() {
 
           <div className="space-y-3">
             <button
-              onClick={() => setShowPaymentModal(true)}
+              onClick={() => {
+                if (!selectedCustomer) {
+                  toast.error('Please select a customer');
+                  return;
+                }
+                if (!selectedScreen) {
+                  toast.error('Please select a screen');
+                  return;
+                }
+                setShowPaymentModal(true);
+              }}
               disabled={cart.length === 0}
               className="w-full bg-amber-600 text-white py-3 rounded-lg font-medium hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >

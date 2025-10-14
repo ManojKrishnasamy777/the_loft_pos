@@ -81,6 +81,13 @@ export interface Order {
   updatedAt: string;
 }
 
+export interface Addon {
+  id: string;
+  name: string;
+  price: number;
+  isActive: boolean;
+}
+
 export interface OrderItem {
   id: string;
   menuItem: MenuItem;
@@ -89,6 +96,7 @@ export interface OrderItem {
   taxAmount: number;
   subtotal: number;
   total: number;
+  addons?: Addon[];
 }
 
 export type PaymentMethod = 'cash' | 'card' | 'upi' | 'netbanking';

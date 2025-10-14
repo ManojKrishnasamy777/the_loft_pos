@@ -1,18 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiClient } from '../config/api';
-import { MenuItem, OrderItem, Order, PaymentMethod, TaxConfiguration } from '../types';
+import { MenuItem, OrderItem, Order, PaymentMethod, TaxConfiguration, Addon } from '../types';
 import { EmailService } from '../services/emailService';
 
 interface CartItem {
   menuItem: MenuItem;
   quantity: number;
+  addons?: Addon[];
 }
 
 interface POSContextType {
   cart: CartItem[];
-  addToCart: (item: MenuItem) => void;
+  addToCart: (item: MenuItem, addons?: Addon[]) => void;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
+  updateAddons: (itemId: string, addons: Addon[]) => void;
   clearCart: () => void;
   calculateTotals: () => {
     subtotal: number;
@@ -52,20 +54,21 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addToCart = (item: MenuItem) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(cartItem => cartItem.menuItem.id === item.id);
+  const addToCart = (item: MenuItem, addons?: Addon[]) => {
+    setCart(prevCart => [
+      ...prevCart,
+      { menuItem: item, quantity: 1, addons: addons || [] }
+    ]);
+  };
 
-      if (existingItem) {
-        return prevCart.map(cartItem =>
-          cartItem.menuItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        );
-      }
-
-      return [...prevCart, { menuItem: item, quantity: 1 }];
-    });
+  const updateAddons = (itemId: string, addons: Addon[]) => {
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.menuItem.id === itemId
+          ? { ...item, addons }
+          : item
+      )
+    );
   };
 
   const removeFromCart = (itemId: string) => {
@@ -93,7 +96,11 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
 
   const calculateTotals = () => {
     const subtotal = cart.reduce(
-      (sum, item) => sum + (item.menuItem.price * item.quantity),
+      (sum, item) => {
+        const itemPrice = item.menuItem.price;
+        const addonsPrice = (item.addons || []).reduce((addonSum, addon) => addonSum + addon.price, 0);
+        return sum + ((itemPrice + addonsPrice) * item.quantity);
+      },
       0
     );
 
@@ -116,6 +123,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
         items: cart.map(cartItem => ({
           menuItemId: cartItem.menuItem.id,
           quantity: cartItem.quantity,
+          addonIds: (cartItem.addons || []).map(addon => addon.id),
         })),
         customerEmail: customerData.email,
         customerName: customerData.name,
@@ -175,6 +183,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
       addToCart,
       removeFromCart,
       updateQuantity,
+      updateAddons,
       clearCart,
       calculateTotals,
       processOrder

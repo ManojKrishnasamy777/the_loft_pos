@@ -11,7 +11,8 @@ import {
   Monitor,
   Mail,
   Key,
-  MessageCircle
+  MessageCircle,
+  Package
 } from 'lucide-react';
 import { PaymentSettings } from './PaymentSettings';
 import { PrinterSettings } from './PrinterSettings';
@@ -25,6 +26,7 @@ import EmailSettings from './EmailSettings';
 import { RoleManagement } from './RoleManagement';
 import { PermissionManagement } from './PermissionManagement';
 import { WhatsAppMessaging } from './WhatsAppMessaging';
+import { AddonSettings } from './AddonSettings';
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState('payment');
@@ -33,6 +35,7 @@ export function SettingsPage() {
     { id: 'payment', name: 'Payment Gateway', icon: CreditCard },
     { id: 'printer', name: 'Thermal Printer', icon: Printer },
     { id: 'tax', name: 'Tax Settings', icon: Calculator },
+    { id: 'addons', name: 'Addons', icon: Package },
     { id: 'users', name: 'User Management', icon: Users },
     { id: 'roles', name: 'Role Management', icon: Shield },
     { id: 'permissions', name: 'Permissions', icon: Key },
@@ -52,6 +55,8 @@ export function SettingsPage() {
         return <PrinterSettings />;
       case 'tax':
         return <TaxSettings />;
+      case 'addons':
+        return <AddonSettings />;
       case 'users':
         return <UserManagement />;
       case 'roles':
