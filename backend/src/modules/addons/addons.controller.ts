@@ -13,10 +13,10 @@ import { AddonsService } from './addons.service';
 import { CreateAddonDto } from './dto/create-addon.dto';
 import { UpdateAddonDto } from './dto/update-addon.dto';
 
-@Controller('api/addons')
+@Controller('addons')
 @UseGuards(JwtAuthGuard)
 export class AddonsController {
-  constructor(private readonly addonsService: AddonsService) {}
+  constructor(private readonly addonsService: AddonsService) { }
 
   @Post()
   create(@Body() createAddonDto: CreateAddonDto) {

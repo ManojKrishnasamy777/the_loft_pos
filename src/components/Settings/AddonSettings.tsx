@@ -162,18 +162,17 @@ export function AddonSettings() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">{addon.name}</h3>
-                        <p className="text-lg font-bold text-amber-600">₹{addon.price.toFixed(2)}</p>
+                        <p className="text-lg font-bold text-amber-600">₹{Number(addon.price).toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        addon.isActive
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${addon.isActive
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
-                      }`}
+                        }`}
                     >
                       {addon.isActive ? 'Active' : 'Inactive'}
                     </span>
