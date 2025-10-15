@@ -90,81 +90,104 @@ export function ScreenManagement() {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-                <div>
-                    <h2 className="text-xl font-bold text-gray-900">Screen Management</h2>
-                    <p className="text-sm text-gray-600 mt-1">Manage cinema or hall screens</p>
+        <div className="bg-white rounded-lg shadow-md">
+            <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900">Screen Management</h2>
+                        <p className="text-sm text-gray-600 mt-1">Manage cinema or hall screens for your venue</p>
+                    </div>
+                    <button
+                        onClick={() => {
+                            setShowForm(true);
+                            setEditingScreen(null);
+                            setFormData({ name: '', capacity: '', description: '', isActive: true });
+                        }}
+                        className="flex items-center space-x-2 bg-amber-600 text-white px-5 py-2.5 rounded-lg hover:bg-amber-700 transition-colors shadow-sm"
+                    >
+                        <Plus className="h-4 w-4" />
+                        <span>Add Screen</span>
+                    </button>
                 </div>
-                <button
-                    onClick={() => {
-                        setShowForm(true);
-                        setEditingScreen(null);
-                        setFormData({ name: '', capacity: '', description: '', isActive: true });
-                    }}
-                    className="flex items-center space-x-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors"
-                >
-                    <Plus className="h-4 w-4" />
-                    <span>Add Screen</span>
-                </button>
             </div>
 
             {loading ? (
-                <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
-                    <span className="ml-2 text-gray-600">Loading screens...</span>
+                <div className="flex flex-col items-center justify-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mb-4"></div>
+                    <span className="text-gray-600">Loading screens...</span>
                 </div>
             ) : (
-                <div className="p-6 space-y-3">
-                    {screens.map((screen) => (
-                        <div
-                            key={screen.id}
-                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
-                        >
-                            <div className="flex items-center space-x-4">
-                                <div className="bg-amber-100 text-amber-600 w-10 h-10 rounded-full flex items-center justify-center">
-                                    <Layers className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-gray-900">{screen.name}</h3>
-                                    <p className="text-sm text-gray-600">
-                                        Capacity: {screen.capacity || 'N/A'}
-                                    </p>
-                                    {screen.description && (
-                                        <p className="text-sm text-gray-500">{screen.description}</p>
-                                    )}
-                                </div>
+                <div className="p-6">
+                    {screens.length === 0 ? (
+                        <div className="text-center py-20">
+                            <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Layers className="h-10 w-10 text-gray-400" />
                             </div>
-
-                            <div className="flex items-center space-x-3">
-                                <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium ${screen.isActive
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800'
-                                        }`}
-                                >
-                                    {screen.isActive ? 'Active' : 'Inactive'}
-                                </span>
-                                <button
-                                    onClick={() => handleEdit(screen)}
-                                    className="p-2 text-blue-600 hover:text-blue-800"
-                                >
-                                    <Edit className="h-4 w-4" />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(screen.id)}
-                                    className="p-2 text-red-600 hover:text-red-800"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
-                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">No screens found</h3>
+                            <p className="text-gray-500 mb-6">Get started by adding your first screen</p>
+                            <button
+                                onClick={() => {
+                                    setShowForm(true);
+                                    setEditingScreen(null);
+                                    setFormData({ name: '', capacity: '', description: '', isActive: true });
+                                }}
+                                className="inline-flex items-center space-x-2 bg-amber-600 text-white px-5 py-2.5 rounded-lg hover:bg-amber-700"
+                            >
+                                <Plus className="h-4 w-4" />
+                                <span>Add Your First Screen</span>
+                            </button>
                         </div>
-                    ))}
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {screens.map((screen) => (
+                                <div
+                                    key={screen.id}
+                                    className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all hover:border-amber-300"
+                                >
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="bg-amber-100 text-amber-600 w-14 h-14 rounded-xl flex items-center justify-center shadow-sm">
+                                            <Layers className="h-7 w-7" />
+                                        </div>
+                                        <span
+                                            className={`px-3 py-1 rounded-full text-xs font-semibold ${screen.isActive
+                                                ? 'bg-green-100 text-green-700 border border-green-200'
+                                                : 'bg-red-100 text-red-700 border border-red-200'
+                                                }`}
+                                        >
+                                            {screen.isActive ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </div>
 
-                    {screens.length === 0 && (
-                        <div className="text-center py-12">
-                            <Layers className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                            <p className="text-gray-500">No screens found</p>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">{screen.name}</h3>
+
+                                    <div className="space-y-2 mb-4">
+                                        <div className="flex items-center text-sm text-gray-600">
+                                            <span className="font-medium mr-2">Capacity:</span>
+                                            <span className="text-gray-800">{screen.capacity || 'Not specified'}</span>
+                                        </div>
+                                        {screen.description && (
+                                            <p className="text-sm text-gray-600 line-clamp-2">{screen.description}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center space-x-2 pt-4 border-t border-gray-200">
+                                        <button
+                                            onClick={() => handleEdit(screen)}
+                                            className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                                        >
+                                            <Edit className="h-4 w-4" />
+                                            <span className="font-medium">Edit</span>
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(screen.id)}
+                                            className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                            <span className="font-medium">Delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -178,33 +201,33 @@ export function ScreenManagement() {
                         </h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Name</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                                 <input
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     required
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Capacity</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
                                 <input
                                     type="number"
                                     value={formData.capacity}
                                     onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Description</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                                 <textarea
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     rows={3}
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-amber-500 focus:border-amber-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                                 />
                             </div>
 
@@ -218,17 +241,17 @@ export function ScreenManagement() {
                                 <label className="ml-2 text-sm text-gray-700">Active</label>
                             </div>
 
-                            <div className="flex justify-end space-x-3">
+                            <div className="flex justify-end space-x-3 pt-4">
                                 <button
                                     type="button"
                                     onClick={() => setShowForm(false)}
-                                    className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 rounded-md bg-amber-600 text-white hover:bg-amber-700"
+                                    className="px-4 py-2 rounded-lg bg-amber-600 text-white hover:bg-amber-700"
                                 >
                                     {editingScreen ? 'Update' : 'Create'}
                                 </button>

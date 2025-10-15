@@ -3,12 +3,14 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
 } from 'typeorm';
 import { Order } from './order.entity';
 import { MenuItem } from './menu-item.entity';
+import { OrderItemAddon } from './order-item-addon.entity';
 
 @Entity('order_items')
 export class OrderItem {
@@ -43,6 +45,9 @@ export class OrderItem {
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total: number;
+
+  @OneToMany(() => OrderItemAddon, (orderItemAddon) => orderItemAddon.orderItem)
+  addons: OrderItemAddon[];
 
   @CreateDateColumn()
   createdAt: Date;
