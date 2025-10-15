@@ -170,8 +170,8 @@ export function AddonSettings() {
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${addon.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
                         }`}
                     >
                       {addon.isActive ? 'Active' : 'Inactive'}
