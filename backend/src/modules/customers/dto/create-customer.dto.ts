@@ -28,4 +28,8 @@ export class CreateCustomerDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiProperty({ example: 'true', required: false })
+  @IsOptional()
+  isActive?: boolean;
 }
