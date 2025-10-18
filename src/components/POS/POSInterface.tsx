@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ShoppingCart, CreditCard, Printer, Users, Layers, Plus } from 'lucide-react';
+import { Search, ShoppingCart, CreditCard, Printer, Users, Layers, Plus, Package } from 'lucide-react';
 import { mockMenuItems, mockCategories, loadMenuData } from '../../data/mockData';
 import { usePOS } from '../../contexts/POSContext';
-import { PaymentMethod, Customer, Screen, Receipt } from '../../types';
+import { PaymentMethod, Customer, Screen, Receipt, Addon } from '../../types';
 import { MenuItemCard } from './MenuItemCard';
 import { Cart } from './Cart';
 import { PaymentModal } from './PaymentModal';
@@ -23,13 +23,15 @@ export function POSInterface() {
   const [lastOrder, setLastOrder] = useState<any>(null);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [customerFormData, setCustomerFormData] = useState({ name: '', email: '', phone: '' });
-  const { cart, calculateTotals, clearCart } = usePOS();
+  const [availableAddons, setAvailableAddons] = useState<Addon[]>([]);
+  const { cart, selectedAddons, toggleAddon, calculateTotals, clearCart } = usePOS();
 
   useEffect(() => {
     loadMenuData();
     fetchMenuItems();
     fetchCustomers();
     fetchScreens();
+    fetchAddons();
   }, []);
 
   const fetchMenuItems = async () => {
@@ -66,6 +68,15 @@ export function POSInterface() {
       setScreens(data.filter((s: Screen) => s.isActive));
     } catch (error) {
       console.error('Failed to fetch screens:', error);
+    }
+  };
+
+  const fetchAddons = async () => {
+    try {
+      const data = await apiClient.getActiveAddons();
+      setAvailableAddons(data);
+    } catch (error) {
+      console.error('Failed to fetch addons:', error);
     }
   };
 
@@ -140,7 +151,7 @@ export function POSInterface() {
     return matchesCategory && matchesSearch && isActive && isAvailable;
   });
 
-  const { subtotal, taxAmount, total } = calculateTotals();
+  const { subtotal, taxAmount, addonsTotal, total } = calculateTotals();
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
@@ -265,6 +276,38 @@ export function POSInterface() {
 
         <Cart />
 
+        {/* Addons Section */}
+        {availableAddons.length > 0 && (
+          <div className="border-t p-4">
+            <div className="flex items-center space-x-2 mb-3">
+              <Package className="h-4 w-4 text-amber-600" />
+              <h3 className="text-sm font-semibold text-gray-900">Add-ons</h3>
+            </div>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {availableAddons.map(addon => {
+                const isSelected = selectedAddons.some(a => a.id === addon.id);
+                return (
+                  <label
+                    key={addon.id}
+                    className="flex items-center justify-between p-2 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleAddon(addon)}
+                        className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-900">{addon.name}</span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">₹{addon.price.toFixed(2)}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Order Summary and Actions */}
         <div className="border-t p-6 space-y-4">
           <div className="space-y-2">
@@ -272,6 +315,12 @@ export function POSInterface() {
               <span>Subtotal:</span>
               <span>₹{subtotal.toFixed(2)}</span>
             </div>
+            {selectedAddons.length > 0 && (
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Add-ons:</span>
+                <span>₹{addonsTotal.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm text-gray-600">
               <span>Tax:</span>
               <span>₹{taxAmount.toFixed(2)}</span>

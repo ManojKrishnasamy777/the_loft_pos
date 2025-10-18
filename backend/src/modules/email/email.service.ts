@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as nodemailer from 'nodemailer';
+import * as PDFDocument from 'pdfkit';
 import { EmailConfig } from '../../entities/email-config.entity';
 import { CreateEmailConfigDto } from './dto/create-email-config.dto';
 import { UpdateEmailConfigDto } from './dto/update-email-config.dto';
@@ -66,7 +67,7 @@ export class EmailService {
     });
   }
 
-  async sendEmail(sendEmailDto: SendEmailDto): Promise<any> {
+  async sendEmail(sendEmailDto: SendEmailDto, attachments?: any[]): Promise<any> {
     const config = await this.getActiveConfig();
     console.log('Active email config:', config);
 
@@ -76,13 +77,17 @@ export class EmailService {
 
     const transporter = await this.createTransporter(config);
 
-    const mailOptions = {
+    const mailOptions: any = {
       from: `"${config.fromName}" <${config.fromEmail}>`,
       to: sendEmailDto.to,
       subject: sendEmailDto.subject,
       text: sendEmailDto.text,
       html: sendEmailDto.html,
     };
+
+    if (attachments && attachments.length > 0) {
+      mailOptions.attachments = attachments;
+    }
 
     try {
       const info = await transporter.sendMail(mailOptions);
@@ -114,6 +119,20 @@ export class EmailService {
           </tr>`,
       )
       .join('');
+
+    const addonsRows = orderData.addons && orderData.addons.length > 0
+      ? orderData.addons
+          .map(
+            (addon: any) =>
+              `<tr>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">${addon.name}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">1</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${Number(addon.price).toFixed(2)}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${Number(addon.price).toFixed(2)}</td>
+              </tr>`,
+          )
+          .join('')
+      : '';
 
     const logoHtml = config.logoUrl
       ? `<img src="${config.logoUrl}" alt="${config.fromName}" style="max-width: 150px; height: auto; margin-bottom: 20px;" />`
@@ -157,8 +176,21 @@ export class EmailService {
               </thead>
               <tbody>
                 ${orderItems}
+                ${addonsRows}
               </tbody>
               <tfoot>
+                <tr style="background: #f3f4f6;">
+                  <td colspan="3" style="padding: 10px; text-align: right;">Subtotal:</td>
+                  <td style="padding: 10px; text-align: right;">₹${Number(orderData.subtotal).toFixed(2)}</td>
+                </tr>
+                ${orderData.addonsTotal > 0 ? `<tr style="background: #f3f4f6;">
+                  <td colspan="3" style="padding: 10px; text-align: right;">Add-ons Total:</td>
+                  <td style="padding: 10px; text-align: right;">₹${Number(orderData.addonsTotal).toFixed(2)}</td>
+                </tr>` : ''}
+                <tr style="background: #f3f4f6;">
+                  <td colspan="3" style="padding: 10px; text-align: right;">Tax:</td>
+                  <td style="padding: 10px; text-align: right;">₹${Number(orderData.taxAmount).toFixed(2)}</td>
+                </tr>
                 <tr style="background: #f9fafb; font-weight: bold;">
                   <td colspan="3" style="padding: 15px; text-align: right; border-top: 2px solid #e5e7eb;">Total Amount:</td>
                   <td style="padding: 15px; text-align: right; border-top: 2px solid #e5e7eb; color: #d97706; font-size: 18px;">₹${Number(orderData.total).toFixed(2)}</td>
@@ -184,10 +216,100 @@ export class EmailService {
       </html>
     `;
 
-    return await this.sendEmail({
-      to: customerEmail,
-      subject: `BILL - ${orderData.orderNumber}`,
-      html,
+    const pdfBuffer = await this.generateInvoicePDF(orderData, config);
+
+    return await this.sendEmail(
+      {
+        to: customerEmail,
+        subject: `BILL - ${orderData.orderNumber}`,
+        html,
+      },
+      [
+        {
+          filename: `Invoice-${orderData.orderNumber}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf',
+        },
+      ],
+    );
+  }
+
+  private async generateInvoicePDF(orderData: any, config: EmailConfig): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50 });
+      const buffers: Buffer[] = [];
+
+      doc.on('data', (chunk) => buffers.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
+
+      doc.fontSize(20).text(config.fromName, { align: 'center' });
+      doc.fontSize(10).text('INVOICE', { align: 'center' });
+      doc.moveDown();
+
+      doc.fontSize(12).text(`Order Number: ${orderData.orderNumber}`);
+      doc.fontSize(10).text(`Date: ${new Date(orderData.createdAt).toLocaleString()}`);
+      doc.text(`Customer: ${orderData.customerName || 'Guest'}`);
+      doc.text(`Payment Method: ${orderData.paymentMethod.toUpperCase()}`);
+      if (orderData.screenName) {
+        doc.text(`Screen: ${orderData.screenName}`);
+      }
+      doc.moveDown();
+
+      doc.fontSize(12).text('Items:', { underline: true });
+      doc.moveDown(0.5);
+
+      const tableTop = doc.y;
+      const itemX = 50;
+      const qtyX = 300;
+      const priceX = 370;
+      const totalX = 480;
+
+      doc.fontSize(10);
+      doc.text('Item', itemX, tableTop, { bold: true });
+      doc.text('Qty', qtyX, tableTop);
+      doc.text('Price', priceX, tableTop);
+      doc.text('Total', totalX, tableTop);
+
+      let y = tableTop + 20;
+      orderData.items.forEach((item: any) => {
+        doc.text(item.name, itemX, y, { width: 240 });
+        doc.text(item.quantity.toString(), qtyX, y);
+        doc.text(`₹${Number(item.price).toFixed(2)}`, priceX, y);
+        doc.text(`₹${(item.price * item.quantity).toFixed(2)}`, totalX, y);
+        y += 20;
+      });
+
+      if (orderData.addons && orderData.addons.length > 0) {
+        doc.moveDown();
+        doc.fontSize(12).text('Add-ons:', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(10);
+        y = doc.y;
+        orderData.addons.forEach((addon: any) => {
+          doc.text(addon.name, itemX, y, { width: 240 });
+          doc.text('1', qtyX, y);
+          doc.text(`₹${Number(addon.price).toFixed(2)}`, priceX, y);
+          doc.text(`₹${Number(addon.price).toFixed(2)}`, totalX, y);
+          y += 20;
+        });
+      }
+
+      doc.moveDown(2);
+      const summaryX = 370;
+      doc.text(`Subtotal: ₹${Number(orderData.subtotal).toFixed(2)}`, summaryX);
+      if (orderData.addonsTotal > 0) {
+        doc.text(`Add-ons: ₹${Number(orderData.addonsTotal).toFixed(2)}`, summaryX);
+      }
+      doc.text(`Tax: ₹${Number(orderData.taxAmount).toFixed(2)}`, summaryX);
+      doc.fontSize(12).text(`Total: ₹${Number(orderData.total).toFixed(2)}`, summaryX, undefined, {
+        bold: true,
+      });
+
+      doc.moveDown(2);
+      doc.fontSize(10).text('Thank you for your business!', { align: 'center' });
+
+      doc.end();
     });
   }
 

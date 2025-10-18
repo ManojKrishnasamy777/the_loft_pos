@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiClient } from '../config/api';
-import { MenuItem, OrderItem, Order, PaymentMethod, TaxConfiguration } from '../types';
+import { MenuItem, OrderItem, Order, PaymentMethod, TaxConfiguration, Addon } from '../types';
 import { EmailService } from '../services/emailService';
 
 interface CartItem {
@@ -10,13 +10,16 @@ interface CartItem {
 
 interface POSContextType {
   cart: CartItem[];
+  selectedAddons: Addon[];
   addToCart: (item: MenuItem) => void;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
+  toggleAddon: (addon: Addon) => void;
   calculateTotals: () => {
     subtotal: number;
     taxAmount: number;
+    addonsTotal: number;
     total: number;
   };
   processOrder: (customerData: {
@@ -33,6 +36,7 @@ const POSContext = createContext<POSContextType | undefined>(undefined);
 
 export function POSProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
   const [globalTaxRate, setGlobalTaxRate] = useState<number>(0.18);
 
   useEffect(() => {
@@ -89,6 +93,17 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = () => {
     setCart([]);
+    setSelectedAddons([]);
+  };
+
+  const toggleAddon = (addon: Addon) => {
+    setSelectedAddons(prev => {
+      const exists = prev.find(a => a.id === addon.id);
+      if (exists) {
+        return prev.filter(a => a.id !== addon.id);
+      }
+      return [...prev, addon];
+    });
   };
 
   const calculateTotals = () => {
@@ -97,10 +112,15 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
       0
     );
 
-    const taxAmount = subtotal * globalTaxRate;
-    const total = subtotal + taxAmount;
+    const addonsTotal = selectedAddons.reduce(
+      (sum, addon) => sum + addon.price,
+      0
+    );
 
-    return { subtotal, taxAmount, total };
+    const taxAmount = subtotal * globalTaxRate;
+    const total = subtotal + taxAmount + addonsTotal;
+
+    return { subtotal, taxAmount, addonsTotal, total };
   };
 
   const processOrder = async (customerData: {
@@ -117,6 +137,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
           menuItemId: cartItem.menuItem.id,
           quantity: cartItem.quantity,
         })),
+        addonIds: selectedAddons.map(addon => addon.id),
         customerEmail: customerData.email,
         customerName: customerData.name,
         customerId: customerData.customerId,
@@ -172,10 +193,12 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
   return (
     <POSContext.Provider value={{
       cart,
+      selectedAddons,
       addToCart,
       removeFromCart,
       updateQuantity,
       clearCart,
+      toggleAddon,
       calculateTotals,
       processOrder
     }}>

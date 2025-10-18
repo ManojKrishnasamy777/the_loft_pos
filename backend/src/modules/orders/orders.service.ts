@@ -5,6 +5,7 @@ import { Order, OrderStatus } from '../../entities/order.entity';
 import { OrderItem } from '../../entities/order-item.entity';
 import { MenuItem } from '../../entities/menu-item.entity';
 import { Customer } from '../../entities/customer.entity';
+import { Addon } from '../../entities/addon.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderFilterDto } from './dto/order-filter.dto';
@@ -22,6 +23,8 @@ export class OrdersService {
     private menuItemRepository: Repository<MenuItem>,
     @InjectRepository(Customer)
     private customerRepository: Repository<Customer>,
+    @InjectRepository(Addon)
+    private addonRepository: Repository<Addon>,
     private emailService: EmailService,
     private settingsService: SettingsService,
   ) { }
@@ -88,6 +91,8 @@ export class OrdersService {
 
     let subtotal = 0;
     const orderItems: Partial<OrderItem>[] = [];
+    let addonsTotal = 0;
+    let addonsData = [];
 
     for (const item of createOrderDto.items) {
       const menuItem = await this.menuItemRepository.findOne({
@@ -111,8 +116,21 @@ export class OrdersService {
       subtotal += itemSubtotal;
     }
 
+    if (createOrderDto.addonIds && createOrderDto.addonIds.length > 0) {
+      const addons = await this.addonRepository.findByIds(createOrderDto.addonIds);
+      if (addons.length !== createOrderDto.addonIds.length) {
+        throw new BadRequestException('Some addons not found');
+      }
+      addonsData = addons.map(addon => ({
+        id: addon.id,
+        name: addon.name,
+        price: addon.price,
+      }));
+      addonsTotal = addons.reduce((sum, addon) => sum + Number(addon.price), 0);
+    }
+
     const taxAmount = subtotal * globalTaxRate;
-    const total = subtotal + taxAmount;
+    const total = subtotal + taxAmount + addonsTotal;
 
     let customerEmail = '';
     let customerName = '';
@@ -136,7 +154,9 @@ export class OrdersService {
       orderNumber,
       subtotal,
       taxAmount,
+      addonsTotal,
       total,
+      addons: addonsData,
       customerEmail,
       customerName,
       customerPhone,
@@ -282,6 +302,10 @@ export class OrdersService {
         email: order.customerEmail || order.customer.email,
         screenName: order.screen?.name,
         total: order.total,
+        subtotal: order.subtotal,
+        taxAmount: order.taxAmount,
+        addonsTotal: order.addonsTotal,
+        addons: order.addons || [],
         items: order.items.map(item => ({
           name: item.menuItem.name,
           quantity: item.quantity,

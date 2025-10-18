@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsArray, IsOptional, IsString, IsEnum, IsEmail, IsPhoneNumber, ValidateNested, IsUUID, IsNumber, Min } from 'class-validator';
+import { IsNotEmpty, IsArray, IsOptional, IsString, IsEnum, IsEmail, IsPhoneNumber, ValidateNested, IsUUID, IsNumber, Min, ArrayNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaymentMethod } from '../../../Enum/paymentmethodEnum';
 
@@ -46,6 +46,12 @@ export class CreateOrderDto {
   @IsOptional()
   @IsUUID()
   screenId?: string;
+
+  @ApiProperty({ example: ['addon-uuid-1', 'addon-uuid-2'], required: false, type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  addonIds?: string[];
 
   @ApiProperty({ enum: PaymentMethod, example: PaymentMethod.CASH })
   @IsEnum(PaymentMethod)

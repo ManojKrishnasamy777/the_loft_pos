@@ -464,6 +464,10 @@ class ApiClient {
       body: JSON.stringify(receipt),
     });
   }
+
+  async getActiveAddons() {
+    return this.request<any[]>('/addons/active');
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
