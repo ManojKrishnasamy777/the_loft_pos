@@ -162,7 +162,7 @@ export function AddonSettings() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">{addon.name}</h3>
-                        <p className="text-lg font-bold text-amber-600">₹{addon.price.toFixed(2)}</p>
+                        <p className="text-lg font-bold text-amber-600">₹{Number(addon.price).toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
