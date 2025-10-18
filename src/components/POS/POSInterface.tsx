@@ -300,7 +300,7 @@ export function POSInterface() {
                       />
                       <span className="text-sm text-gray-900">{addon.name}</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-700">₹{addon.price.toFixed(2)}</span>
+                    <span className="text-sm font-medium text-gray-700">₹{Number(addon.price).toFixed(2)}</span>
                   </label>
                 );
               })}
@@ -318,7 +318,7 @@ export function POSInterface() {
             {selectedAddons.length > 0 && (
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Add-ons:</span>
-                <span>₹{addonsTotal.toFixed(2)}</span>
+                <span>₹{Number(addonsTotal).toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm text-gray-600">
@@ -327,7 +327,7 @@ export function POSInterface() {
             </div>
             <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t">
               <span>Total:</span>
-              <span>₹{total.toFixed(2)}</span>
+              <span>₹{Number(total).toFixed(2)}</span>
             </div>
           </div>
 

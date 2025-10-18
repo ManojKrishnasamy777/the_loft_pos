@@ -97,6 +97,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
   };
 
   const toggleAddon = (addon: Addon) => {
+    debugger;
     setSelectedAddons(prev => {
       const exists = prev.find(a => a.id === addon.id);
       if (exists) {
@@ -107,13 +108,14 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
   };
 
   const calculateTotals = () => {
+    debugger
     const subtotal = cart.reduce(
       (sum, item) => sum + (item.menuItem.price * item.quantity),
       0
     );
 
     const addonsTotal = selectedAddons.reduce(
-      (sum, addon) => sum + addon.price,
+      (sum, addon) => sum + Number(addon.price),
       0
     );
 
