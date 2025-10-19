@@ -27,21 +27,24 @@ A comprehensive Point of Sale (POS) system backend built with NestJS, TypeORM, a
 ## Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd backend
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Environment Setup**
+
    ```bash
    cp .env.example .env
    ```
-   
+
    Update the `.env` file with your configuration:
    - Database credentials
    - JWT secret
@@ -49,28 +52,31 @@ A comprehensive Point of Sale (POS) system backend built with NestJS, TypeORM, a
    - Email configuration
 
 4. **Database Setup**
+
    ```bash
    # Create database
    mysql -u root -p
    CREATE DATABASE loft_pos;
-   
+
    # Run migrations (if using migrations)
    npm run migration:run
-   
+
    # Or use synchronize for development
    # Set synchronize: true in database config
    ```
 
 5. **Seed Database**
+
    ```bash
    npm run seed
    ```
 
 6. **Start the application**
+
    ```bash
    # Development
    npm run start:dev
-   
+
    # Production
    npm run build
    npm run start:prod
@@ -79,27 +85,30 @@ A comprehensive Point of Sale (POS) system backend built with NestJS, TypeORM, a
 ## API Documentation
 
 Once the application is running, visit:
-- **Swagger UI**: http://localhost:3001/api/docs
-- **API Base URL**: http://localhost:3001/api
+
+- **Swagger UI**: https://theloftpos.metabustech.com//api/docs
+- **API Base URL**: https://theloftpos.metabustech.com//api
 
 ## Default Users
 
 After seeding, you can login with these accounts:
 
-| Role | Email | Password |
-|------|-------|----------|
-| Administrator | admin@theloftscreening.com | password123 |
-| Manager | manager@theloftscreening.com | password123 |
-| Cashier | cashier@theloftscreening.com | password123 |
+| Role          | Email                        | Password    |
+| ------------- | ---------------------------- | ----------- |
+| Administrator | admin@theloftscreening.com   | password123 |
+| Manager       | manager@theloftscreening.com | password123 |
+| Cashier       | cashier@theloftscreening.com | password123 |
 
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/login` - User login
 - `GET /api/auth/profile` - Get current user profile
 - `POST /api/auth/validate` - Validate token
 
 ### Users
+
 - `GET /api/users` - Get all users
 - `POST /api/users` - Create user
 - `GET /api/users/:id` - Get user by ID
@@ -107,6 +116,7 @@ After seeding, you can login with these accounts:
 - `DELETE /api/users/:id` - Delete user
 
 ### Menu
+
 - `GET /api/menu/categories` - Get all categories
 - `POST /api/menu/categories` - Create category
 - `GET /api/menu/items` - Get all menu items
@@ -114,6 +124,7 @@ After seeding, you can login with these accounts:
 - `GET /api/menu/items/active` - Get active menu items
 
 ### Orders
+
 - `GET /api/orders` - Get all orders (with filters)
 - `POST /api/orders` - Create order
 - `GET /api/orders/:id` - Get order by ID
@@ -122,6 +133,7 @@ After seeding, you can login with these accounts:
 - `GET /api/orders/stats` - Get order statistics
 
 ### Payments
+
 - `POST /api/payments/razorpay/create-order/:orderId` - Create Razorpay order
 - `POST /api/payments` - Create payment record
 - `POST /api/payments/verify` - Verify Razorpay payment
@@ -130,6 +142,7 @@ After seeding, you can login with these accounts:
 - `GET /api/payments/stats` - Get payment statistics
 
 ### Reports
+
 - `GET /api/reports/sales` - Get sales report
 - `GET /api/reports/items` - Get item performance report
 - `GET /api/reports/daily` - Get daily sales report
@@ -137,6 +150,7 @@ After seeding, you can login with these accounts:
 - `GET /api/reports/export/:type` - Export report as CSV
 
 ### Settings
+
 - `GET /api/settings` - Get all settings
 - `POST /api/settings` - Create setting
 - `GET /api/settings/:key` - Get setting by key
@@ -144,6 +158,7 @@ After seeding, you can login with these accounts:
 - `POST /api/settings/initialize` - Initialize default settings
 
 ### Audit
+
 - `GET /api/audit` - Get audit logs (with filters)
 - `GET /api/audit/stats` - Get audit statistics
 
@@ -173,6 +188,7 @@ After seeding, you can login with these accounts:
 ## Development
 
 ### Running Tests
+
 ```bash
 # Unit tests
 npm run test
@@ -185,6 +201,7 @@ npm run test:cov
 ```
 
 ### Database Migrations
+
 ```bash
 # Generate migration
 npm run migration:generate -- src/database/migrations/MigrationName
@@ -197,6 +214,7 @@ npm run migration:revert
 ```
 
 ### Code Quality
+
 ```bash
 # Linting
 npm run lint
@@ -208,6 +226,7 @@ npm run format
 ## Production Deployment
 
 1. **Build the application**
+
    ```bash
    npm run build
    ```
@@ -219,6 +238,7 @@ npm run format
    - Configure production Razorpay keys
 
 3. **Run migrations**
+
    ```bash
    npm run migration:run
    ```
