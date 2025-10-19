@@ -15,8 +15,6 @@ interface PaymentModalProps {
 
 export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }: PaymentModalProps) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
-  const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
   const [cashReceived, setCashReceived] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState('');
@@ -53,8 +51,6 @@ export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }
         // Process online payment through Razorpay
         const orderData = {
           orderNumber: `ORD-${Date.now()}`,
-          customerName,
-          customerEmail,
           total
         };
 
@@ -68,8 +64,6 @@ export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }
       }
 
       const order = await processOrder({
-        name: customerName || undefined,
-        email: customerEmail || undefined,
         customerId: customerId || undefined,
         screenId: screenId || undefined,
         paymentMethod,
@@ -80,11 +74,7 @@ export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }
         ? `Order ${order.orderNumber} completed successfully!`
         : `Payment successful! Order ${order.orderNumber} completed.`;
 
-      if (customerEmail) {
-        toast.success(`${successMessage} Confirmation email sent.`, { duration: 4000 });
-      } else {
-        toast.success(successMessage);
-      }
+      toast.success(successMessage);
 
       if (onSuccess) {
         onSuccess(order);
@@ -120,35 +110,6 @@ export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }
             <div className="flex justify-between text-lg font-bold text-gray-900">
               <span>Total Amount:</span>
               <span>₹{total.toFixed(2)}</span>
-            </div>
-          </div>
-
-          {/* Customer Information */}
-          <div className="space-y-4">
-            <h3 className="font-medium text-gray-900">Customer Information (Optional)</h3>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Name
-              </label>
-              <input
-                type="text"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
-                placeholder="Customer name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
-                placeholder="customer@email.com"
-              />
             </div>
           </div>
 
