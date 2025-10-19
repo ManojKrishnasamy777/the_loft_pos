@@ -33,7 +33,7 @@ export class StorageService {
             fs.writeFileSync(filePath, buffer);
 
             // Return relative URL path for serving
-            return `${process.env.FRONTEND_URL}/backend/uploads/${folder}/${filename}`;
+            return `${process.env.STORAGE_URL}${folder}/${filename}`;
         } catch (err) {
             throw new BadRequestException('Failed to save image file');
         }
