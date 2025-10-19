@@ -139,6 +139,70 @@ class ApiClient {
     });
   }
 
+  async Downloadpdf(data: any) {
+
+
+    const response = await fetch(`${this.baseURL}/orders/DownloadPDF`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Include auth token if needed
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to download PDF');
+    }
+
+    // IMPORTANT: get the response as a Blob
+    this.PdfDownloadAsBlob(response, false, 'INVOICE - ' + data.orderNumber + '.pdf');
+  }
+
+  async PdfDownloadAsBlob(response: any, view: boolean = false, filename: string = "") {
+    try {
+      // Ensure response is a Blob
+      const blob = response instanceof Blob ? response : await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+
+      if (view) {
+        window.open(objectUrl, '_blank');
+      } else {
+        const link = document.createElement('a');
+        link.href = objectUrl;
+
+        // Handling content-disposition for filename
+        const contentDisposition = response.headers?.get
+          ? response.headers.get('content-disposition')
+          : response.headers?.['content-disposition'];
+
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = contentDisposition ? filenameRegex.exec(contentDisposition) : null;
+
+        if (matches && matches[1]) {
+          link.download = matches[1].replace(/['"]/g, '');
+        } else if (filename) {
+          link.download = filename;
+        } else {
+          link.download = 'download.pdf';
+        }
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      // Release the object URL
+      window.URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.error("Error handling file download:", error);
+    }
+  }
+
+
+
+
   // Payment endpoints
   async createRazorpayOrder(orderId: string) {
     return this.request<any>(`/payments/razorpay/create-order/${orderId}`, {

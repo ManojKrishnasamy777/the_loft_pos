@@ -17,6 +17,7 @@ import { PrinterModule } from './modules/printer/printer.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
 import { AddonsModule } from './modules/addons/addons.module';
+import { StorageModule } from './common/storage/storage.module';
 
 @Module({
   imports: [
@@ -39,7 +40,8 @@ import { AddonsModule } from './modules/addons/addons.module';
     PrinterModule,
     UploadModule,
     WhatsAppModule,
-    AddonsModule
+    AddonsModule,
+    StorageModule
   ],
 })
 export class AppModule { }

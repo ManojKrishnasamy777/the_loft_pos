@@ -28,7 +28,7 @@ export function AddonSettings() {
 
   const loadAddons = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/addons', {
+      const response = await fetch('https://theloftpos.metabustech.com/api/addons', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('authToken')}`,
         },
@@ -54,8 +54,8 @@ export function AddonSettings() {
 
     try {
       const url = editingAddon
-        ? `http://localhost:3001/api/addons/${editingAddon.id}`
-        : 'http://localhost:3001/api/addons';
+        ? `https://theloftpos.metabustech.com/api/addons/${editingAddon.id}`
+        : 'https://theloftpos.metabustech.com/api/addons';
 
       const method = editingAddon ? 'PUT' : 'POST';
 
@@ -96,7 +96,7 @@ export function AddonSettings() {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this addon?')) {
       try {
-        const response = await fetch(`http://localhost:3001/api/addons/${id}`, {
+        const response = await fetch(`https://theloftpos.metabustech.com/api/addons/${id}`, {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${localStorage.getItem('authToken')}`,

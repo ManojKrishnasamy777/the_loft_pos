@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MenuItem } from '../../entities/menu-item.entity';
@@ -7,17 +11,24 @@ import { CreateMenuItemDto } from './dto/create-menu-item.dto';
 import { UpdateMenuItemDto } from './dto/update-menu-item.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { StorageService } from '../../common/storage/storage.service';
 
 @Injectable()
 export class MenuService {
   constructor(
     @InjectRepository(MenuItem)
-    private menuItemRepository: Repository<MenuItem>,
-    @InjectRepository(Category)
-    private categoryRepository: Repository<Category>,
-  ) {}
+    private readonly menuItemRepository: Repository<MenuItem>,
 
-  // Menu Items
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
+
+    private readonly storageService: StorageService, // ✅ injected
+  ) { }
+
+  // ========================================================
+  // 🍴 MENU ITEMS
+  // ========================================================
+
   async findAllMenuItems(): Promise<MenuItem[]> {
     return this.menuItemRepository.find({
       relations: ['category'],
@@ -38,47 +49,51 @@ export class MenuService {
       where: { id },
       relations: ['category'],
     });
-
-    if (!menuItem) {
-      throw new NotFoundException('Menu item not found');
-    }
-
+    if (!menuItem) throw new NotFoundException('Menu item not found');
     return menuItem;
   }
 
-  async createMenuItem(createMenuItemDto: CreateMenuItemDto): Promise<MenuItem> {
+  async createMenuItem(dto: CreateMenuItemDto): Promise<MenuItem> {
     const category = await this.categoryRepository.findOne({
-      where: { id: createMenuItemDto.categoryId },
+      where: { id: dto.categoryId },
     });
+    if (!category) throw new NotFoundException('Category not found');
 
-    if (!category) {
-      throw new NotFoundException('Category not found');
+    const menuItem = this.menuItemRepository.create(dto);
+
+    // ✅ Save image via StorageService
+    if (dto.image && dto.image.startsWith('data:')) {
+      menuItem.image = this.storageService.saveBase64Image(dto.image, 'menu');
     }
 
-    const menuItem = this.menuItemRepository.create(createMenuItemDto);
-    const savedMenuItem = await this.menuItemRepository.save(menuItem);
-    return this.findMenuItemById(savedMenuItem.id);
+    const saved = await this.menuItemRepository.save(menuItem);
+    return this.findMenuItemById(saved.id);
   }
 
-  async updateMenuItem(id: string, updateMenuItemDto: UpdateMenuItemDto): Promise<MenuItem> {
+  async updateMenuItem(id: string, dto: UpdateMenuItemDto): Promise<MenuItem> {
     const menuItem = await this.findMenuItemById(id);
 
-    if (updateMenuItemDto.categoryId) {
+    if (dto.categoryId) {
       const category = await this.categoryRepository.findOne({
-        where: { id: updateMenuItemDto.categoryId },
+        where: { id: dto.categoryId },
       });
-
-      if (!category) {
-        throw new NotFoundException('Category not found');
-      }
+      if (!category) throw new NotFoundException('Category not found');
     }
 
-    await this.menuItemRepository.update(id, updateMenuItemDto);
+    // ✅ Update image via StorageService
+    if (dto.image && dto.image.startsWith('data:')) {
+      const newPath = this.storageService.saveBase64Image(dto.image, 'menu');
+      this.storageService.deleteFile(menuItem.image); // delete old image
+      dto.image = newPath;
+    }
+
+    await this.menuItemRepository.update(id, dto);
     return this.findMenuItemById(id);
   }
 
   async removeMenuItem(id: string): Promise<void> {
     const menuItem = await this.findMenuItemById(id);
+    this.storageService.deleteFile(menuItem.image); // delete image
     await this.menuItemRepository.remove(menuItem);
   }
 
@@ -88,7 +103,10 @@ export class MenuService {
     return this.findMenuItemById(id);
   }
 
-  // Categories
+  // ========================================================
+  // 🗂️ CATEGORIES
+  // ========================================================
+
   async findAllCategories(): Promise<Category[]> {
     return this.categoryRepository.find({
       order: { sortOrder: 'ASC', name: 'ASC' },
@@ -107,35 +125,35 @@ export class MenuService {
       where: { id },
       relations: ['menuItems'],
     });
-
-    if (!category) {
-      throw new NotFoundException('Category not found');
-    }
-
+    if (!category) throw new NotFoundException('Category not found');
     return category;
   }
 
-  async createCategory(createCategoryDto: CreateCategoryDto): Promise<Category> {
-    const category = this.categoryRepository.create(createCategoryDto);
+  async createCategory(dto: CreateCategoryDto): Promise<Category> {
+    const category = this.categoryRepository.create(dto);
     return this.categoryRepository.save(category);
   }
 
-  async updateCategory(id: string, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
-    const category = await this.findCategoryById(id);
-    await this.categoryRepository.update(id, updateCategoryDto);
+  async updateCategory(
+    id: string,
+    dto: UpdateCategoryDto,
+  ): Promise<Category> {
+    await this.findCategoryById(id);
+    await this.categoryRepository.update(id, dto);
     return this.findCategoryById(id);
   }
 
   async removeCategory(id: string): Promise<void> {
     const category = await this.findCategoryById(id);
-    
-    // Check if category has menu items
-    const menuItemsCount = await this.menuItemRepository.count({
+
+    const count = await this.menuItemRepository.count({
       where: { categoryId: id },
     });
 
-    if (menuItemsCount > 0) {
-      throw new Error('Cannot delete category with existing menu items');
+    if (count > 0) {
+      throw new BadRequestException(
+        'Cannot delete category with existing menu items',
+      );
     }
 
     await this.categoryRepository.remove(category);

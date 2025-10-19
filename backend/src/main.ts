@@ -18,6 +18,9 @@ async function bootstrap() {
     credentials: true,
   });
 
+  app.useBodyParser('json', { limit: '10mb' });
+  app.useBodyParser('urlencoded', { limit: '10mb', extended: true });
+
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
@@ -53,7 +56,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
-  
+
   console.log(`🚀 The Loft POS API is running on: http://localhost:${port}`);
   console.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`);
 }

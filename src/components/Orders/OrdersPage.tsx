@@ -12,7 +12,11 @@ import {
   Calendar,
   User,
   DollarSign,
-  CreditCard
+  CreditCard,
+  Printer,
+  Download,
+  DownloadCloud,
+  DownloadCloudIcon
 } from 'lucide-react';
 
 interface Order {
@@ -28,6 +32,8 @@ interface Order {
   paymentMethod: string;
   createdAt: string;
   items: any[];
+  addons: any[];
+  addonsTotal: string;
 }
 
 export function OrdersPage() {
@@ -73,6 +79,7 @@ export function OrdersPage() {
       await loadOrders();
       if (selectedOrder && selectedOrder.id === orderId) {
         const updatedOrder = await apiClient.getOrderById(orderId);
+        ;
         setSelectedOrder(updatedOrder);
       }
     } catch (error) {
@@ -82,6 +89,14 @@ export function OrdersPage() {
       setUpdatingStatus(false);
     }
   };
+
+  const DownloadPdf = async (order: any) => {
+    await apiClient.Downloadpdf(order);
+  };
+
+
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -256,13 +271,20 @@ export function OrdersPage() {
                             {new Date(order.createdAt).toLocaleTimeString()}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm flex">
                           <button
                             onClick={() => setSelectedOrder(order)}
-                            className="text-amber-600 hover:text-amber-900 flex items-center space-x-1"
+                            className="text-amber-600 hover:text-amber-900 flex items-center space-x-1 mr-2"
                           >
                             <Eye className="h-4 w-4" />
-                            <span>View</span>
+                            {/* <span>View</span> */}
+                          </button>
+                          <button
+                            onClick={() => DownloadPdf(order)}
+                            className="text-amber-600 hover:text-amber-900 flex items-center space-x-1"
+                          >
+                            <DownloadCloudIcon className="h-4 w-4" />
+                            {/* <span>View</span> */}
                           </button>
                         </td>
                       </tr>
@@ -388,12 +410,41 @@ export function OrdersPage() {
                   })}
                 </div>
               </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Add-On Items</h3>
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  {selectedOrder.addons?.map((item, index) => {
+                    ;
+                    // const price = item.price != null ? Number(item.price) : 0;
+                    // const total = item.total != null ? Number(item.total) : 0;
+
+                    return (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-4 border-b border-gray-200 last:border-b-0"
+                      >
+                        <div>
+                          <p className="font-medium text-gray-900">{item?.name || 'Item'}</p>
+                          {/* <p className="text-sm text-gray-600">
+                            Qty: {item.quantity} × ₹{price.toFixed(2)}
+                          </p> */}
+                        </div>
+                        <p className="font-medium text-gray-900">₹{Number(item.price).toFixed(2)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
               {/* Totals */}
               <div className="border-t border-gray-200 pt-4 space-y-2">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
                   <span>₹{Number(selectedOrder.subtotal ?? 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Add-on Total</span>
+                  <span>₹{Number(selectedOrder.addonsTotal ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Tax</span>

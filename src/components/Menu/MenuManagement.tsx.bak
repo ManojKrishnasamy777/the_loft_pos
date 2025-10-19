@@ -107,9 +107,7 @@ export function MenuManagement() {
       setUploadingImage(true);
       let imageUrl = itemForm.image;
 
-      if (selectedImage) {
-        imageUrl = await imageService.uploadImage(selectedImage);
-      }
+      
 
       const data = {
         ...itemForm,

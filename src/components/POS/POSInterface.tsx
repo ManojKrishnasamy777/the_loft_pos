@@ -24,7 +24,7 @@ export function POSInterface() {
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [customerFormData, setCustomerFormData] = useState({ name: '', email: '', phone: '' });
   const [availableAddons, setAvailableAddons] = useState<Addon[]>([]);
-  const { cart, selectedAddons, toggleAddon, calculateTotals, clearCart } = usePOS();
+  const { cart, selectedAddons, toggleAddon, updateAddonPrice, calculateTotals, clearCart } = usePOS();
 
   useEffect(() => {
     loadMenuData();
@@ -80,8 +80,12 @@ export function POSInterface() {
     }
   };
 
+
+
+
+
   const handlePrintReceipt = async (order: any) => {
-    debugger
+
     try {
       const settings = await apiClient.getSettings();
       const settingsMap = settings.reduce((acc: any, setting: any) => {
@@ -107,7 +111,7 @@ export function POSInterface() {
       };
 
       const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:3001/api/print/receipt', {
+      const response = await fetch('https://theloftpos.metabustech.com/api/print/receipt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -284,8 +288,14 @@ export function POSInterface() {
               <h3 className="text-sm font-semibold text-gray-900">Add-ons</h3>
             </div>
             <div className="space-y-2 max-h-40 overflow-y-auto">
-              {availableAddons.map(addon => {
-                const isSelected = selectedAddons.some(a => a.id === addon.id);
+              {availableAddons.map((addon) => {
+                const isSelected = selectedAddons.some((a) => a.id === addon.id);
+
+                // Get the current price from selectedAddons if selected, else use addon.price
+                const currentPrice = isSelected
+                  ? selectedAddons.find((a) => a.id === addon.id)?.price ?? ""
+                  : addon.price;
+
                 return (
                   <label
                     key={addon.id}
@@ -300,11 +310,22 @@ export function POSInterface() {
                       />
                       <span className="text-sm text-gray-900">{addon.name}</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-700">₹{Number(addon.price).toFixed(2)}</span>
+
+                    <span className="text-sm font-medium text-gray-700">
+                      <input
+                        type="number"
+                        min="0"
+                        value={currentPrice}
+                        required
+                        onChange={(e) => updateAddonPrice(addon.id, e.target.value)}
+                        className="mt-1 block w-20 border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-amber-500 focus:border-amber-500"
+                      />
+                    </span>
                   </label>
                 );
               })}
             </div>
+
           </div>
         )}
 

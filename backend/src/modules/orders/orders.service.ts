@@ -117,7 +117,7 @@ export class OrdersService {
     }
 
     if (createOrderDto.addonIds && createOrderDto.addonIds.length > 0) {
-      const addons = await this.addonRepository.findByIds(createOrderDto.addonIds);
+      let addons: any = createOrderDto.addonIds;
       if (addons.length !== createOrderDto.addonIds.length) {
         throw new BadRequestException('Some addons not found');
       }
@@ -339,5 +339,16 @@ export class OrdersService {
     }
 
     return `ORD-${dateStr}-${sequence.toString().padStart(3, '0')}`;
+  }
+
+  async downloadPDF(createOrderDto: any, userId: string) {
+    try {
+      const config = await this.emailService.getActiveConfig();
+      const pdfBuffer = await this.emailService.generateInvoicePDF(createOrderDto, config);
+      return pdfBuffer;
+    }
+    catch (error) {
+      throw new BadRequestException('Could not generate PDF');
+    }
   }
 }

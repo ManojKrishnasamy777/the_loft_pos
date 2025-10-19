@@ -233,7 +233,7 @@ export class EmailService {
       ],
     );
   }
-  private async generateInvoicePDF(orderData: any, config: EmailConfig): Promise<Buffer> {
+  async generateInvoicePDF(orderData: any, config: EmailConfig): Promise<Buffer> {
     const CURRENCY_SYMBOL = '₹'; // Define the symbol for easy changes
     const LOGO_PATH = 'assets/logob.png'; // ⚠️ IMPORTANT: UPDATE WITH YOUR LOGO PATH
     const LOGO_WIDTH = 250; // Set a fixed width for the logo
@@ -330,9 +330,9 @@ export class EmailService {
       doc.text('Payment:', col2X, detailY + 30, { bold: true });
       doc.text(orderData.paymentMethod.toUpperCase(), col2X + 70, detailY + 30);
 
-      if (orderData.screenName) {
+      if (orderData.screenName || orderData?.screen?.name) {
         doc.text('Screen:', col2X, detailY + 45, { bold: true });
-        doc.text(orderData.screenName, col2X + 70, detailY + 45);
+        doc.text(orderData.screenName || orderData?.screen?.name, col2X + 70, detailY + 45);
       }
 
       doc.moveDown(4); // Move down past the detail section

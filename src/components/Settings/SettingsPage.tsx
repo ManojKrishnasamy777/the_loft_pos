@@ -42,9 +42,9 @@ export function SettingsPage() {
     { id: 'screen', name: 'Screens', icon: Monitor },
     { id: 'email', name: 'Email Configuration', icon: Mail },
     { id: 'whatsapp', name: 'WhatsApp Messaging', icon: MessageCircle },
-    { id: 'security', name: 'Security', icon: Shield },
-    { id: 'notifications', name: 'Notifications', icon: Bell },
-    { id: 'backup', name: 'Backup & Restore', icon: Database }
+    // { id: 'security', name: 'Security', icon: Shield },
+    // { id: 'notifications', name: 'Notifications', icon: Bell },
+    // { id: 'backup', name: 'Backup & Restore', icon: Database }
   ];
 
   const renderTabContent = () => {
@@ -69,14 +69,14 @@ export function SettingsPage() {
         return <EmailSettings />;
       case 'whatsapp':
         return <WhatsAppMessaging />;
-      case 'security':
-        return <SecuritySettings />;
-      case 'notifications':
-        return <NotificationSettings />;
-      case 'backup':
-        return <BackupSettings />;
+      // case 'security':
+      //   return <SecuritySettings />;
+      // case 'notifications':
+      //   return <NotificationSettings />;
+      // case 'backup':
+      //   return <BackupSettings />;
       default:
-        return <PaymentSettings />;
+        return <UserManagement />;
     }
   };
 

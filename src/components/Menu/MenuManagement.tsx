@@ -9,7 +9,7 @@ interface MenuItem {
   name: string;
   description: string;
   price: number;
-  
+
   categoryId: string;
   category?: Category;
   isActive: boolean;
@@ -41,14 +41,14 @@ export function MenuManagement() {
     name: '',
     description: '',
     price: '',
-    
+
     categoryId: '',
     isActive: true,
     sortOrder: 0,
     image: ''
   });
 
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedImage, setSelectedImage] = useState<Base64URLString | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -81,20 +81,37 @@ export function MenuManagement() {
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be less than 5MB');
-        return;
-      }
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Limit file size to 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5MB");
+      return;
     }
+
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+
+      // Example: set full base64 DataURL for preview
+      setImagePreview(base64String);
+      setSelectedImage(base64String);
+
+      // OR extract only the Base64 part (optional)
+      const pureBase64 = base64String.split(",")[1];
+      console.log("Base64 string:", pureBase64);
+    };
+
+    reader.onerror = () => {
+      console.error("Error reading file");
+    };
+
+    reader.readAsDataURL(file);
   };
+
 
   const handleRemoveImage = () => {
     setSelectedImage(null);
@@ -104,18 +121,13 @@ export function MenuManagement() {
 
   const handleSaveItem = async () => {
     try {
+      ;
       setUploadingImage(true);
-      let imageUrl = itemForm.image;
-
-      if (selectedImage) {
-        imageUrl = await imageService.uploadImage(selectedImage);
-      }
-
       const data = {
         ...itemForm,
         price: parseFloat(itemForm.price),
-        
-        image: imageUrl
+
+        image: selectedImage
       };
 
       if (editingItem) {
@@ -190,7 +202,7 @@ export function MenuManagement() {
       name: item.name,
       description: item.description,
       price: item.price.toString(),
-      
+
       categoryId: item.categoryId,
       isActive: item.isActive,
       sortOrder: item.sortOrder,
@@ -218,7 +230,7 @@ export function MenuManagement() {
       name: '',
       description: '',
       price: '',
-      
+
       categoryId: '',
       isActive: true,
       sortOrder: 0,

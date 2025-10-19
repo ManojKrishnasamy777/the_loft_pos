@@ -11,12 +11,12 @@ export function LoginForm() {
   const { login, isLoading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    debugger
+
     e.preventDefault();
     setError('');
 
     const success = await login(email, password);
-    debugger
+
     if (!success) {
       setError('Invalid credentials. Please try again.');
       toast.error('Login failed. Please check your credentials.');
@@ -103,7 +103,7 @@ export function LoginForm() {
                 <p><strong>Admin:</strong> admin@theloftscreening.com</p>
                 <p><strong>Manager:</strong> manager@theloftscreening.com</p>
                 <p><strong>Cashier:</strong> cashier@theloftscreening.com</p>
-                <p className="text-gray-500 mt-2">Password: any password works for demo</p>
+                <p className="text-gray-500 mt-2">Password: password123</p>
               </div>
             </div>
           </div>

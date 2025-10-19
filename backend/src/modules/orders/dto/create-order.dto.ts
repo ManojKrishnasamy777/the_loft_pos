@@ -50,7 +50,7 @@ export class CreateOrderDto {
   @ApiProperty({ example: ['addon-uuid-1', 'addon-uuid-2'], required: false, type: [String] })
   @IsOptional()
   @IsArray()
-  @IsUUID('4', { each: true })
+  // @IsUUID('4', { each: true })
   addonIds?: string[];
 
   @ApiProperty({ enum: PaymentMethod, example: PaymentMethod.CASH })

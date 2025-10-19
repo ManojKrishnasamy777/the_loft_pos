@@ -35,7 +35,7 @@ export function PrinterSettings() {
   const loadPrinters = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:3001/api/printer-config', {
+      const response = await fetch('https://theloftpos.metabustech.com/api/printer-config', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
@@ -55,8 +55,8 @@ export function PrinterSettings() {
     try {
       const token = localStorage.getItem('authToken');
       const url = editingId
-        ? `http://localhost:3001/api/printer-config/${editingId}`
-        : 'http://localhost:3001/api/printer-config';
+        ? `https://theloftpos.metabustech.com/api/printer-config/${editingId}`
+        : 'https://theloftpos.metabustech.com/api/printer-config';
       const method = editingId ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -86,7 +86,7 @@ export function PrinterSettings() {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:3001/api/printer-config/${id}`, {
+      const response = await fetch(`https://theloftpos.metabustech.com/api/printer-config/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -106,7 +106,7 @@ export function PrinterSettings() {
   const handleSetDefault = async (id: number) => {
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:3001/api/printer-config/${id}/set-default`, {
+      const response = await fetch(`https://theloftpos.metabustech.com/api/printer-config/${id}/set-default`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -126,7 +126,7 @@ export function PrinterSettings() {
   const handleTestPrint = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:3001/api/print/test', {
+      const response = await fetch('https://theloftpos.metabustech.com/api/print/test', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });

@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Query,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Query, UseGuards, Request, Res, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -16,13 +6,15 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderFilterDto } from './dto/order-filter.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OrderStatus } from '../../entities/order.entity';
+import { Response as ExpressResponse } from 'express';
+
 
 @ApiTags('orders')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(private readonly ordersService: OrdersService) { }
 
   @ApiOperation({ summary: 'Create a new order' })
   @ApiResponse({ status: 201, description: 'Order created successfully' })
@@ -76,5 +68,29 @@ export class OrdersController {
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body('status') status: OrderStatus) {
     return this.ordersService.updateStatus(id, status);
+  }
+
+  @ApiOperation({ summary: 'Download Invoice PDF' })
+  @ApiResponse({ status: 201, description: 'Downloaded successfully' })
+  @Post('DownloadPDF')
+  async downloadPDF(
+    @Body() createOrderDto: any,
+    @Request() req,
+    @Res() res: ExpressResponse,
+  ) {
+    try {
+      const pdfBuffer = await this.ordersService.downloadPDF(createOrderDto, req.user?.id);
+
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename=invoice_${createOrderDto.orderNumber || 'unknown'}.pdf`,
+        'Content-Length': pdfBuffer.length,
+      });
+
+      res.send(pdfBuffer); // send the PDF
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      throw new BadRequestException('Could not generate PDF');
+    }
   }
 }

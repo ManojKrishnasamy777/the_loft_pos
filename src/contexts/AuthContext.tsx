@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
-      debugger
+
       const response = await apiClient.login(email, password);
       setUser(response.user);
       localStorage.setItem('userData', JSON.stringify(response.user));

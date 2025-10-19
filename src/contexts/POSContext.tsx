@@ -16,6 +16,7 @@ interface POSContextType {
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
   toggleAddon: (addon: Addon) => void;
+  updateAddonPrice: (addonId: string, price: number) => void;
   calculateTotals: () => {
     subtotal: number;
     taxAmount: number;
@@ -45,7 +46,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
 
   const loadTaxRate = async () => {
     try {
-      debugger
+
       const settings = await apiClient.getSettings();
       const taxRateSetting = settings.find((s: any) => s.key === 'tax_rate');
       if (taxRateSetting) {
@@ -97,7 +98,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
   };
 
   const toggleAddon = (addon: Addon) => {
-    debugger;
+    ;
     setSelectedAddons(prev => {
       const exists = prev.find(a => a.id === addon.id);
       if (exists) {
@@ -107,8 +108,17 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const updateAddonPrice = (addonId: string, price: number) => {
+    setSelectedAddons(prev =>
+      prev.map(addon =>
+        addon.id === addonId ? { ...addon, price: Number(price) } : addon
+      )
+    );
+  };
+
+
   const calculateTotals = () => {
-    debugger
+
     const subtotal = cart.reduce(
       (sum, item) => sum + (item.menuItem.price * item.quantity),
       0
@@ -139,7 +149,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
           menuItemId: cartItem.menuItem.id,
           quantity: cartItem.quantity,
         })),
-        addonIds: selectedAddons.map(addon => addon.id),
+        addonIds: selectedAddons.map(addon => addon),
         customerEmail: customerData.email,
         customerName: customerData.name,
         customerId: customerData.customerId,
@@ -150,14 +160,14 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
 
       const order = await apiClient.createOrder(orderData);
 
-      if (customerData.email && order.status === 'completed') {
-        try {
-          await EmailService.sendOrderConfirmation(order);
-          console.log('Order confirmation email sent to:', customerData.email);
-        } catch (emailError) {
-          console.error('Failed to send confirmation email:', emailError);
-        }
-      }
+      // if (customerData.email && order.status === 'completed') {
+      //   try {
+      //     await EmailService.sendOrderConfirmation(order);
+      //     console.log('Order confirmation email sent to:', customerData.email);
+      //   } catch (emailError) {
+      //     console.error('Failed to send confirmation email:', emailError);
+      //   }
+      // }
 
       try {
         const receipt = {
@@ -201,6 +211,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
       updateQuantity,
       clearCart,
       toggleAddon,
+      updateAddonPrice,
       calculateTotals,
       processOrder
     }}>
