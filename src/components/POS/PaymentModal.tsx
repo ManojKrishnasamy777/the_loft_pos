@@ -95,10 +95,10 @@ export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }
   const change = paymentMethod === 'cash' || paymentMethod === 'card' ? Math.max(0, cashReceived - total) : 0;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Process Payment</h2>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Process Payment</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -107,26 +107,26 @@ export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Order Total */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="flex justify-between text-lg font-bold text-gray-900">
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+            <div className="flex justify-between text-base sm:text-lg font-bold text-gray-900">
               <span>Total Amount:</span>
               <span>₹{total.toFixed(2)}</span>
             </div>
           </div>
 
           {/* Payment Method Selection */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-gray-900">Payment Method</h3>
+              <h3 className="text-sm sm:text-base font-medium text-gray-900">Payment Method</h3>
               {/* {!isPaymentGatewayReady && (
                 <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
                   Online payments loading...
                 </span>
               )} */}
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {paymentMethods.map(method => {
                 const Icon = method.icon;
                 // const isOnlinePayment = method.id !== 'cash';
@@ -138,15 +138,15 @@ export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }
                     key={method.id}
                     onClick={() => setPaymentMethod(method.id)}
                     // disabled={isDisabled}
-                    className={`p-4 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${paymentMethod === method.id
+                    className={`p-3 sm:p-4 border-2 rounded-lg flex flex-col items-center space-y-1 sm:space-y-2 transition-colors touch-manipulation ${paymentMethod === method.id
                       ? 'border-amber-500 bg-amber-50 text-amber-700'
                       : isDisabled
                         ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
                         : 'border-gray-200 hover:border-gray-300'
                       }`}
                   >
-                    <Icon className="h-6 w-6" />
-                    <span className="text-sm font-medium">{method.label}</span>
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                    <span className="text-xs sm:text-sm font-medium">{method.label}</span>
                     {/* {isOnlinePayment && (
                       <span className="text-xs text-gray-500">via Razorpay</span>
                     )} */}
@@ -156,27 +156,27 @@ export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }
             </div>
           </div>
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Notes</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700">Notes</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add any notes for this order..."
-              className="w-full h-18 px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 resize-y"
+              className="w-full h-18 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 resize-y"
             />
           </div>
 
           {/* Cash Payment Details */}
           {/* {paymentMethod === 'cash' || paymentMethod === 'card' && ( */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Cash Received
               </label>
               <input
                 type="number"
                 value={cashReceived}
                 onChange={(e) => setCashReceived(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
                 placeholder="0.00"
                 min="0"
                 step="0.01"
@@ -225,18 +225,18 @@ export function PaymentModal({ total, customerId, screenId, onClose, onSuccess }
           )} */}
 
           {/* Action Buttons */}
-          <div className="flex space-x-3 pt-4">
+          <div className="flex space-x-2 sm:space-x-3 pt-3 sm:pt-4">
             <button
               onClick={onClose}
               disabled={isProcessing}
-              className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors"
+              className="flex-1 bg-gray-300 text-gray-700 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-gray-400 transition-colors touch-manipulation"
             >
               Cancel
             </button>
             <button
               onClick={handlePayment}
               disabled={isProcessing || ((paymentMethod === 'cash' || paymentMethod === 'card') && cashReceived < total)}
-              className="flex-1 bg-amber-600 text-white py-3 rounded-lg font-medium hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+              className="flex-1 bg-amber-600 text-white py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 touch-manipulation"
             >
               {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
               <span>

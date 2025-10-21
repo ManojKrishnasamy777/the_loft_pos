@@ -82,20 +82,20 @@ export function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-          <p className="text-gray-600">Configure your POS system settings</p>
+      <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6">
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Settings</h1>
+          <p className="text-sm sm:text-base text-gray-600">Configure your POS system settings</p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Settings Navigation */}
           <div className="lg:w-64">
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-4 border-b border-gray-200">
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="p-3 sm:p-4 border-b border-gray-200">
                 <div className="flex items-center space-x-2">
-                  <Settings className="h-5 w-5 text-amber-600" />
-                  <h2 className="font-semibold text-gray-900">Settings Menu</h2>
+                  <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+                  <h2 className="text-sm sm:text-base font-semibold text-gray-900">Settings Menu</h2>
                 </div>
               </div>
               <nav className="p-2">
@@ -105,13 +105,13 @@ export function SettingsPage() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-md text-left transition-colors ${activeTab === tab.id
+                      className={`w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-2 rounded-md text-left transition-colors ${activeTab === tab.id
                         ? 'bg-amber-100 text-amber-700 border-r-2 border-amber-600'
                         : 'text-gray-700 hover:bg-gray-100'
                         }`}
                     >
-                      <Icon className="h-4 w-4" />
-                      <span className="text-sm font-medium">{tab.name}</span>
+                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm font-medium">{tab.name}</span>
                     </button>
                   );
                 })}

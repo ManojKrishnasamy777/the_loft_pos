@@ -81,10 +81,6 @@ export function POSInterface() {
     }
   };
 
-
-
-
-
   const handlePrintReceipt = async (order: any) => {
 
     try {
@@ -159,29 +155,29 @@ export function POSInterface() {
   const { subtotal, taxAmount, addonsTotal, total } = calculateTotals();
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
       {/* Left Panel - Menu Items */}
-      <div className="flex-1 p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Point of Sale</h1>
+      <div className="flex-1 p-3 sm:p-4 lg:p-6 overflow-y-auto">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Point of Sale</h1>
 
           {/* Search Bar */}
-          <div className="relative mb-4">
+          <div className="relative mb-3 sm:mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <input
               type="text"
               placeholder="Search items..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             />
           </div>
 
           {/* Category Filters */}
-          <div className="flex space-x-2 mb-6 overflow-x-auto">
+          <div className="flex space-x-2 mb-4 sm:mb-6 overflow-x-auto pb-2 scrollbar-thin">
             <button
               onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${selectedCategory === 'all'
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0 ${selectedCategory === 'all'
                 ? 'bg-amber-600 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
@@ -192,7 +188,7 @@ export function POSInterface() {
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap ${selectedCategory === category.id
+                className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0 ${selectedCategory === category.id
                   ? 'bg-amber-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
@@ -210,7 +206,7 @@ export function POSInterface() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
               {filteredItems.map(item => (
                 <MenuItemCard key={item.id} item={item} />
               ))}
@@ -226,20 +222,20 @@ export function POSInterface() {
       </div>
 
       {/* Right Panel - Cart */}
-      <div className="w-96 bg-white shadow-lg border-l">
-        <div className="p-6 border-b">
-          <div className="flex items-center space-x-2 mb-4">
-            <ShoppingCart className="h-6 w-6 text-amber-600" />
-            <h2 className="text-xl font-semibold text-gray-900">
+      <div className="w-full lg:w-96 bg-white shadow-lg border-t lg:border-t-0 lg:border-l flex flex-col max-h-screen lg:h-screen">
+        <div className="p-4 sm:p-6 border-b flex-shrink-0">
+          <div className="flex items-center space-x-2 mb-3 sm:mb-4">
+            <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
               Current Order ({cart.length})
             </h2>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Customer</label>
-              <div className="flex space-x-2">
-                <div className="flex-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Customer</label>
+              <div className="flex space-x-1 sm:space-x-2">
+                <div className="flex-1 min-w-0">
                   <Select
                     value={
                       selectedCustomer
@@ -262,7 +258,7 @@ export function POSInterface() {
                     styles={{
                       control: (base, state) => ({
                         ...base,
-                        borderColor: state.isFocused ? '#f59e0b' : '#d1d5db', // amber focus color
+                        borderColor: state.isFocused ? '#f59e0b' : '#d1d5db',
                         boxShadow: state.isFocused ? '0 0 0 1px #f59e0b' : 'none',
                         minHeight: '38px',
                         fontSize: '0.875rem',
@@ -272,7 +268,7 @@ export function POSInterface() {
                 </div>
                 <button
                   onClick={() => setShowCustomerForm(true)}
-                  className="bg-amber-600 text-white p-1.5 rounded-md hover:bg-amber-700"
+                  className="bg-amber-600 text-white p-2 rounded-md hover:bg-amber-700 flex-shrink-0"
                   title="Add new customer"
                 >
                   <Plus className="h-4 w-4" />
@@ -283,7 +279,7 @@ export function POSInterface() {
 
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Screen</label>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Screen</label>
               <Select
                 value={
                   selectedScreen
@@ -306,7 +302,7 @@ export function POSInterface() {
                 styles={{
                   control: (base, state) => ({
                     ...base,
-                    borderColor: state.isFocused ? '#f59e0b' : '#d1d5db', // amber focus
+                    borderColor: state.isFocused ? '#f59e0b' : '#d1d5db',
                     boxShadow: state.isFocused ? '0 0 0 1px #f59e0b' : 'none',
                     minHeight: '38px',
                     fontSize: '0.875rem',
@@ -322,7 +318,7 @@ export function POSInterface() {
 
         {/* Addons Section */}
         {availableAddons.length > 0 && (
-          <div className="border-t p-4">
+          <div className="border-t p-3 sm:p-4 flex-shrink-0">
             <div className="flex items-center space-x-2 mb-3">
               <Package className="h-4 w-4 text-amber-600" />
               <h3 className="text-sm font-semibold text-gray-900">Add-ons</h3>
@@ -331,7 +327,6 @@ export function POSInterface() {
               {availableAddons.map((addon) => {
                 const isSelected = selectedAddons.some((a) => a.id === addon.id);
 
-                // Get the current price from selectedAddons if selected, else use addon.price
                 const currentPrice = isSelected
                   ? selectedAddons.find((a) => a.id === addon.id)?.price ?? ""
                   : addon.price;
@@ -341,24 +336,24 @@ export function POSInterface() {
                     key={addon.id}
                     className="flex items-center justify-between p-2 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer"
                   >
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 min-w-0">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleAddon(addon)}
-                        className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                        className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded flex-shrink-0"
                       />
-                      <span className="text-sm text-gray-900">{addon.name}</span>
+                      <span className="text-sm text-gray-900 truncate">{addon.name}</span>
                     </div>
 
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-gray-700 ml-2">
                       <input
                         type="number"
                         min="0"
                         value={currentPrice}
                         required
                         onChange={(e) => updateAddonPrice(addon.id, e.target.value)}
-                        className="mt-1 block w-20 border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-amber-500 focus:border-amber-500"
+                        className="mt-1 block w-16 sm:w-20 border border-gray-300 rounded-md shadow-sm px-2 py-1 text-xs focus:ring-amber-500 focus:border-amber-500"
                       />
                     </span>
                   </label>
@@ -370,33 +365,33 @@ export function POSInterface() {
         )}
 
         {/* Order Summary and Actions */}
-        <div className="border-t p-6 space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
+        <div className="border-t p-4 sm:p-6 space-y-3 sm:space-y-4 flex-shrink-0 mt-auto">
+          <div className="space-y-1.5 sm:space-y-2">
+            <div className="flex justify-between text-xs sm:text-sm text-gray-600">
               <span>Subtotal:</span>
               <span>₹{subtotal.toFixed(2)}</span>
             </div>
             {selectedAddons.length > 0 && (
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-xs sm:text-sm text-gray-600">
                 <span>Add-ons:</span>
                 <span>₹{Number(addonsTotal).toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between text-sm text-gray-600">
+            <div className="flex justify-between text-xs sm:text-sm text-gray-600">
               <span>Tax:</span>
               <span>₹{taxAmount.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t">
+            <div className="flex justify-between text-base sm:text-lg font-bold text-gray-900 pt-2 border-t">
               <span>Total:</span>
               <span>₹{Number(total).toFixed(2)}</span>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <button
               onClick={() => setShowPaymentModal(true)}
               disabled={cart.length === 0 && selectedAddons.length === 0}
-              className="w-full bg-amber-600 text-white py-3 rounded-lg font-medium hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              className="w-full bg-amber-600 text-white py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               <CreditCard className="h-4 w-4" />
               <span>Process Payment</span>
@@ -411,10 +406,11 @@ export function POSInterface() {
                 }
               }}
               disabled={!lastOrder}
-              className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              className="w-full border border-gray-300 text-gray-700 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               <Printer className="h-4 w-4" />
-              <span>Print Last Receipt</span>
+              <span className="hidden sm:inline">Print Last Receipt</span>
+              <span className="sm:hidden">Print Receipt</span>
             </button>
           </div>
         </div>
@@ -445,8 +441,8 @@ export function POSInterface() {
 
       {/* Quick Add Customer Modal */}
       {showCustomerForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Customer</h3>
             <form onSubmit={handleCreateCustomer} className="space-y-4">
               <div>

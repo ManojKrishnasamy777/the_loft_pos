@@ -82,12 +82,12 @@ export function Dashboard() {
 
   if (error && !loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-red-900 mb-2">Failed to Load Dashboard</h2>
-            <p className="text-red-700 mb-4">{error}</p>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6 text-center">
+            <AlertCircle className="h-10 w-10 sm:h-12 sm:w-12 text-red-600 mx-auto mb-4" />
+            <h2 className="text-lg sm:text-xl font-semibold text-red-900 mb-2">Failed to Load Dashboard</h2>
+            <p className="text-sm sm:text-base text-red-700 mb-4">{error}</p>
             <button
               onClick={loadDashboardData}
               className="inline-flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
@@ -133,31 +133,31 @@ export function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-600">Welcome to The Loft POS System</p>
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+          <p className="text-sm sm:text-base text-gray-600">Welcome to The Loft POS System</p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
           {dashboardStats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.name} className="bg-white rounded-lg shadow p-6">
+              <div key={stat.name} className="bg-white rounded-lg shadow p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">{stat.name}</p>
-                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                    <p className={`text-sm ${
+                    <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">{stat.name}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <p className={`text-xs sm:text-sm ${
                       stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {stat.change} from yesterday
                     </p>
                   </div>
-                  <div className="bg-amber-100 p-3 rounded-full">
-                    <Icon className="h-6 w-6 text-amber-600" />
+                  <div className="bg-amber-100 p-2 sm:p-3 rounded-full">
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
                   </div>
                 </div>
               </div>
@@ -165,26 +165,26 @@ export function Dashboard() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Recent Orders */}
           <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
               <div className="flex items-center space-x-2">
-                <Clock className="h-5 w-5 text-amber-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">Recent Orders</h2>
               </div>
             </div>
             <div className="divide-y divide-gray-200">
               {recentOrders.length > 0 ? (
                 recentOrders.map(order => (
-                  <div key={order.id} className="px-6 py-4 hover:bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900">{order.orderNumber}</p>
-                        <p className="text-sm text-gray-600">{order.customerName || 'Walk-in Customer'}</p>
+                  <div key={order.id} className="px-4 sm:px-6 py-3 sm:py-4 hover:bg-gray-50">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm sm:text-base font-medium text-gray-900">{order.orderNumber}</p>
+                        <p className="text-xs sm:text-sm text-gray-600 truncate">{order.customerName || 'Walk-in Customer'}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium text-gray-900">₹{Number(order.total || 0).toFixed(2)}</p>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm sm:text-base font-medium text-gray-900">₹{Number(order.total || 0).toFixed(2)}</p>
                         <div className="flex items-center space-x-2">
                           <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
                             order.status === 'completed'
@@ -195,7 +195,7 @@ export function Dashboard() {
                           }`}>
                             {order.status}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 hidden sm:inline">
                             {new Date(order.createdAt).toLocaleTimeString()}
                           </span>
                         </div>
@@ -204,16 +204,16 @@ export function Dashboard() {
                   </div>
                 ))
               ) : (
-                <div className="px-6 py-8 text-center">
-                  <Clock className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500">No recent orders</p>
+                <div className="px-4 sm:px-6 py-6 sm:py-8 text-center">
+                  <Clock className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-sm sm:text-base text-gray-500">No recent orders</p>
                 </div>
               )}
             </div>
-            <div className="px-6 py-3 bg-gray-50">
+            <div className="px-4 sm:px-6 py-2 sm:py-3 bg-gray-50">
               <button
                 onClick={() => navigate('/orders')}
-                className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+                className="text-xs sm:text-sm text-amber-600 hover:text-amber-700 font-medium"
               >
                 View all orders →
               </button>
@@ -222,34 +222,34 @@ export function Dashboard() {
 
           {/* Top Selling Items */}
           <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
               <div className="flex items-center space-x-2">
-                <Star className="h-5 w-5 text-amber-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Top Selling Items</h2>
+                <Star className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">Top Selling Items</h2>
               </div>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {topItems.length > 0 ? (
                 <div className="space-y-4">
                   {topItems.map((item, index) => (
-                    <div key={item.item?.id || index} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="bg-amber-100 text-amber-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium">
+                    <div key={item.item?.id || index} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                        <div className="bg-amber-100 text-amber-600 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium flex-shrink-0">
                           {index + 1}
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{item.item?.name || 'Unknown Item'}</p>
-                          <p className="text-sm text-gray-600">{item.quantity} sold today</p>
+                        <div className="min-w-0">
+                          <p className="text-sm sm:text-base font-medium text-gray-900 truncate">{item.item?.name || 'Unknown Item'}</p>
+                          <p className="text-xs sm:text-sm text-gray-600">{item.quantity} sold today</p>
                         </div>
                       </div>
-                      <p className="font-medium text-gray-900">₹{Number(item.revenue || 0).toFixed(2)}</p>
+                      <p className="text-sm sm:text-base font-medium text-gray-900 flex-shrink-0">₹{Number(item.revenue || 0).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Star className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500">No sales data available</p>
+                <div className="text-center py-6 sm:py-8">
+                  <Star className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-sm sm:text-base text-gray-500">No sales data available</p>
                 </div>
               )}
             </div>
@@ -258,18 +258,18 @@ export function Dashboard() {
 
         {/* Sales by Hour Chart */}
         {salesByHour.length > 0 && (
-          <div className="mt-8 bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className="mt-4 sm:mt-6 lg:mt-8 bg-white rounded-lg shadow">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
               <div className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5 text-amber-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Hourly Sales Overview</h2>
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">Hourly Sales Overview</h2>
               </div>
             </div>
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="space-y-4">
                 {salesByHour.slice(0, 6).map((hour) => (
-                  <div key={hour.hour} className="flex items-center">
-                    <div className="w-24 text-sm font-medium text-gray-700">
+                  <div key={hour.hour} className="flex items-center gap-2">
+                    <div className="w-16 sm:w-24 text-xs sm:text-sm font-medium text-gray-700 flex-shrink-0">
                       {hour.hour}:00
                     </div>
                     <div className="flex-1">
@@ -280,7 +280,7 @@ export function Dashboard() {
                             style={{ width: `${Math.min((hour.sales / Math.max(...salesByHour.map(h => h.sales))) * 100, 100)}%` }}
                           />
                         </div>
-                        <div className="w-32 text-right">
+                        <div className="w-24 sm:w-32 text-right flex-shrink-0">
                           <p className="text-sm font-medium text-gray-900">₹{Number(hour.sales || 0).toFixed(2)}</p>
                           <p className="text-xs text-gray-500">{hour.orderCount} orders</p>
                         </div>
@@ -294,39 +294,39 @@ export function Dashboard() {
         )}
 
         {/* Quick Actions */}
-        <div className="mt-8 bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-4 sm:mt-6 lg:mt-8 bg-white rounded-lg shadow p-4 sm:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
             <button
               onClick={() => navigate('/pos')}
-              className="flex items-center space-x-3 p-4 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors"
+              className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors"
             >
-              <Coffee className="h-6 w-6 text-amber-600" />
-              <span className="font-medium text-gray-900">New Order</span>
+              <Coffee className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600 flex-shrink-0" />
+              <span className="text-sm sm:text-base font-medium text-gray-900">New Order</span>
             </button>
 
             <button
               onClick={() => navigate('/reports')}
-              className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+              className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
             >
-              <FileText className="h-6 w-6 text-blue-600" />
-              <span className="font-medium text-gray-900">View Reports</span>
+              <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
+              <span className="text-sm sm:text-base font-medium text-gray-900">View Reports</span>
             </button>
 
             <button
               onClick={() => navigate('/menu')}
-              className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+              className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
             >
-              <Menu className="h-6 w-6 text-green-600" />
-              <span className="font-medium text-gray-900">Manage Menu</span>
+              <Menu className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 flex-shrink-0" />
+              <span className="text-sm sm:text-base font-medium text-gray-900">Manage Menu</span>
             </button>
 
             <button
               onClick={() => navigate('/reports')}
-              className="flex items-center space-x-3 p-4 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
+              className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
             >
-              <TrendingUp className="h-6 w-6 text-teal-600" />
-              <span className="font-medium text-gray-900">Analytics</span>
+              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600 flex-shrink-0" />
+              <span className="text-sm sm:text-base font-medium text-gray-900">Analytics</span>
             </button>
           </div>
         </div>
