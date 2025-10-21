@@ -32,13 +32,13 @@ export function SettingsPage() {
   const [activeTab, setActiveTab] = useState('payment');
 
   const tabs = [
-    { id: 'payment', name: 'Payment Gateway', icon: CreditCard },
-    { id: 'printer', name: 'Thermal Printer', icon: Printer },
-    { id: 'tax', name: 'Tax Settings', icon: Calculator },
-    { id: 'addons', name: 'Addons', icon: Package },
+    // { id: 'payment', name: 'Payment Gateway', icon: CreditCard },
+    // { id: 'printer', name: 'Thermal Printer', icon: Printer },
     { id: 'users', name: 'User Management', icon: Users },
     { id: 'roles', name: 'Role Management', icon: Shield },
     { id: 'permissions', name: 'Permissions', icon: Key },
+    { id: 'tax', name: 'Tax Settings', icon: Calculator },
+    { id: 'addons', name: 'Addons', icon: Package },
     { id: 'screen', name: 'Screens', icon: Monitor },
     { id: 'email', name: 'Email Configuration', icon: Mail },
     { id: 'whatsapp', name: 'WhatsApp Messaging', icon: MessageCircle },
@@ -49,10 +49,10 @@ export function SettingsPage() {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'payment':
-        return <PaymentSettings />;
-      case 'printer':
-        return <PrinterSettings />;
+      // case 'payment':
+      //   return <PaymentSettings />;
+      // case 'printer':
+      //   return <PrinterSettings />;
       case 'tax':
         return <TaxSettings />;
       case 'addons':

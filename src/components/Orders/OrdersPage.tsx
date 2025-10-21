@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { apiClient } from '../../config/api';
+import Select from 'react-select';
 import {
   Package,
   Search,
@@ -16,7 +17,8 @@ import {
   Printer,
   Download,
   DownloadCloud,
-  DownloadCloudIcon
+  DownloadCloudIcon,
+  AlertCircle
 } from 'lucide-react';
 
 interface Order {
@@ -34,7 +36,24 @@ interface Order {
   items: any[];
   addons: any[];
   addonsTotal: string;
+  notes?: string;
+
 }
+
+const statusOptions = [
+  { value: '', label: 'All Status' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'refunded', label: 'Refunded' },
+];
+
+const paymentOptions = [
+  { value: '', label: 'All Payments' },
+  { value: 'cash', label: 'Cash' },
+  { value: 'card', label: 'Card' },
+  { value: 'upi', label: 'UPI' },
+];
 
 export function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -47,6 +66,15 @@ export function OrdersPage() {
   const [page, setPage] = useState(1);
   const limit = 20;
   const [updatingStatus, setUpdatingStatus] = useState(false);
+
+
+  const handleChange = (selectedOption: any) => {
+    setStatusFilter(selectedOption?.value || '');
+  };
+
+  const handlepaymentChange = (selectedOption: any) => {
+    setPaymentFilter(selectedOption?.value || '');
+  };
 
   useEffect(() => {
     loadOrders();
@@ -155,29 +183,47 @@ export function OrdersPage() {
               <div className="flex space-x-3">
                 <div className="flex items-center space-x-2">
                   <Filter className="h-5 w-5 text-gray-400" />
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-amber-500 focus:border-amber-500"
-                  >
-                    <option value="">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="refunded">Refunded</option>
-                  </select>
+                  <Select
+                    value={statusOptions.find(option => option.value === statusFilter)}
+                    onChange={handleChange}
+                    options={statusOptions}
+                    isClearable
+                    className="text-sm"
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        borderColor: '#d1d5db', // Tailwind gray-300
+                        borderRadius: '0.375rem', // Tailwind rounded-md
+                        minHeight: '38px',
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 9999,
+                      }),
+                    }}
+                  />
                 </div>
 
-                <select
-                  value={paymentFilter}
-                  onChange={(e) => setPaymentFilter(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-amber-500 focus:border-amber-500"
-                >
-                  <option value="">All Payments</option>
-                  <option value="cash">Cash</option>
-                  <option value="card">Card</option>
-                  <option value="upi">UPI</option>
-                </select>
+                <Select
+                  value={paymentOptions.find(option => option.value === paymentFilter)}
+                  onChange={handlepaymentChange}
+                  options={paymentOptions}
+                  isClearable
+                  className="text-sm"
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      borderColor: '#d1d5db', // Tailwind gray-300
+                      borderRadius: '0.375rem', // Tailwind rounded-md
+                      minHeight: '38px',
+                      padding: '0 0.25rem',
+                    }),
+                    menu: (base) => ({
+                      ...base,
+                      zIndex: 9999,
+                    }),
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -227,7 +273,7 @@ export function OrdersPage() {
                                 {order.orderNumber}
                               </div>
                               <div className="text-xs text-gray-500">
-                                {order.items?.length || 0} items
+                                {order.items?.length || 0} items || {order.addons?.length || 0} add-ons
                               </div>
                             </div>
                           </div>
@@ -410,15 +456,11 @@ export function OrdersPage() {
                   })}
                 </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Add-On Items</h3>
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  {selectedOrder.addons?.map((item, index) => {
-                    ;
-                    // const price = item.price != null ? Number(item.price) : 0;
-                    // const total = item.total != null ? Number(item.total) : 0;
-
-                    return (
+              {selectedOrder?.addons?.length > 0 ? (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Add-On Items</h3>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    {selectedOrder.addons.map((item, index) => (
                       <div
                         key={index}
                         className="flex justify-between items-center p-4 border-b border-gray-200 last:border-b-0"
@@ -426,15 +468,61 @@ export function OrdersPage() {
                         <div>
                           <p className="font-medium text-gray-900">{item?.name || 'Item'}</p>
                           {/* <p className="text-sm text-gray-600">
-                            Qty: {item.quantity} × ₹{price.toFixed(2)}
-                          </p> */}
+              Qty: {item.quantity} × ₹{Number(item.price).toFixed(2)}
+            </p> */}
                         </div>
-                        <p className="font-medium text-gray-900">₹{Number(item.price).toFixed(2)}</p>
+                        <p className="font-medium text-gray-900">
+                          ₹{Number(item.price).toFixed(2)}
+                        </p>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Add-On Items</h3>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+
+                    <div
+                      className="flex justify-between items-center p-4 border-b border-gray-200 last:border-b-0"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">No add-on items.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+
+
+
+              {/* <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Notes</h3>
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+
+                  <div
+                    className="flex justify-between items-center p-4 border-b border-gray-200 last:border-b-0"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900">{selectedOrder.notes}</p>
+
+                    </div>
+                  </div>
+                </div>
+              </div> */}
+
+              {selectedOrder?.notes?.trim() !== '' && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex gap-3">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-medium mb-1">Notes</p>
+                    <p>{selectedOrder.notes}</p>
+                  </div>
+                </div>
+              )}
+
 
               {/* Totals */}
               <div className="border-t border-gray-200 pt-4 space-y-2">

@@ -38,7 +38,7 @@ export function TaxSettings() {
       }, {});
 
       setDefaultTaxRate(settingsMap.tax_rate || '0.18');
-      setTaxEnabled(settingsMap.tax_enabled === 'true');
+      // setTaxEnabled(settingsMap.tax_enabled === 'true');
     } catch (error) {
       console.error('Failed to load tax settings:', error);
       toast.error('Failed to load tax settings');
@@ -54,7 +54,7 @@ export function TaxSettings() {
       setSaving(true);
       await Promise.all([
         apiClient.updateSetting('tax_rate', { value: defaultTaxRate }),
-        apiClient.updateSetting('tax_enabled', { value: taxEnabled.toString() })
+        // apiClient.updateSetting('tax_enabled', { value: taxEnabled.toString() })
       ]);
       toast.success('Tax settings saved successfully');
     } catch (error: any) {
@@ -143,7 +143,7 @@ export function TaxSettings() {
       </div>
 
       <div className="p-6 space-y-6">
-        <div className="flex items-center space-x-3 mb-6">
+        {/* <div className="flex items-center space-x-3 mb-6">
           <input
             type="checkbox"
             id="taxEnabled"
@@ -154,7 +154,7 @@ export function TaxSettings() {
           <label htmlFor="taxEnabled" className="text-sm font-medium text-gray-700">
             Enable Tax Calculation
           </label>
-        </div>
+        </div> */}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

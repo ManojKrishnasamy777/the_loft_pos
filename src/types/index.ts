@@ -99,7 +99,8 @@ export interface OrderItem {
   addons?: Addon[];
 }
 
-export type PaymentMethod = 'cash' | 'card' | 'upi' | 'netbanking';
+export type PaymentMethod = 'cash' | 'card';
+// export type PaymentMethod = 'cash' | 'card' | 'upi' | 'netbanking';
 export type OrderStatus = 'pending' | 'completed' | 'cancelled' | 'refunded';
 
 export interface RazorpayConfig {

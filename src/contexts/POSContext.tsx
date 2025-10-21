@@ -30,6 +30,7 @@ interface POSContextType {
     screenId?: string;
     paymentMethod: PaymentMethod;
     paymentData?: any;
+    notes?: string;
   }) => Promise<Order>;
 }
 
@@ -142,8 +143,10 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
     screenId?: string;
     paymentMethod: PaymentMethod;
     paymentData?: any;
+    notes?: string;
   }): Promise<Order> => {
     try {
+      debugger
       const orderData = {
         items: cart.map(cartItem => ({
           menuItemId: cartItem.menuItem.id,
@@ -156,6 +159,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
         screenId: customerData.screenId,
         paymentMethod: customerData.paymentMethod,
         metadata: customerData.paymentData,
+        notes: customerData.notes || undefined,
       };
 
       const order = await apiClient.createOrder(orderData);

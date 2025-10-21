@@ -102,6 +102,9 @@ export class Order {
   @Column({ type: 'json', nullable: true })
   metadata: any;
 
+  @Column({ type: 'longtext', nullable: true })
+  notes: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

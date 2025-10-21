@@ -163,7 +163,8 @@ export class OrdersService {
       customerId: createOrderDto.customerId || null,
       screenId: createOrderDto.screenId,
       paymentMethod: createOrderDto.paymentMethod,
-      status: OrderStatus.PENDING,
+      notes: createOrderDto.notes,
+      status: OrderStatus.COMPLETED,
       createdById: userId,
       metadata: createOrderDto.metadata,
     });

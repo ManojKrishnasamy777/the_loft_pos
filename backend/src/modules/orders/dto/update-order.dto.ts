@@ -36,4 +36,13 @@ export class UpdateOrderDto {
   @ApiProperty({ example: {}, required: false })
   @IsOptional()
   metadata?: any;
+
+  @ApiProperty({
+    example: 'Customer requested extra cheese and gift wrapping.',
+    required: false,
+    description: 'Optional notes about the customer or order'
+  })
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }

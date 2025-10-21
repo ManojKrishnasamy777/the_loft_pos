@@ -8,6 +8,7 @@ import { Cart } from './Cart';
 import { PaymentModal } from './PaymentModal';
 import { apiClient } from '../../config/api';
 import toast from 'react-hot-toast';
+import Select from 'react-select';
 
 export function POSInterface() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -238,18 +239,37 @@ export function POSInterface() {
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Customer</label>
               <div className="flex space-x-2">
-                <select
-                  value={selectedCustomer || ''}
-                  onChange={(e) => setSelectedCustomer(e.target.value || null)}
-                  className="flex-1 text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-amber-500 focus:border-amber-500"
-                >
-                  <option value="">Walk-in Customer</option>
-                  {customers.map(customer => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name} {customer.phone ? `(${customer.phone})` : ''}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex-1">
+                  <Select
+                    value={
+                      selectedCustomer
+                        ? customers.map(c => ({
+                          value: c.id,
+                          label: `${c.name}${c.phone ? ` (${c.phone})` : ''}`,
+                        })).find(opt => opt.value === selectedCustomer)
+                        : { value: '', label: 'Walk-in Customer' }
+                    }
+                    onChange={(opt) => setSelectedCustomer(opt?.value || null)}
+                    options={[
+                      { value: '', label: 'Walk-in Customer' },
+                      ...customers.map(c => ({
+                        value: c.id,
+                        label: `${c.name}${c.phone ? ` (${c.phone})` : ''}`,
+                      })),
+                    ]}
+                    isSearchable
+                    placeholder="Select customer..."
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        borderColor: state.isFocused ? '#f59e0b' : '#d1d5db', // amber focus color
+                        boxShadow: state.isFocused ? '0 0 0 1px #f59e0b' : 'none',
+                        minHeight: '38px',
+                        fontSize: '0.875rem',
+                      }),
+                    }}
+                  />
+                </div>
                 <button
                   onClick={() => setShowCustomerForm(true)}
                   className="bg-amber-600 text-white p-1.5 rounded-md hover:bg-amber-700"
@@ -258,23 +278,43 @@ export function POSInterface() {
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
+
             </div>
+
 
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Screen</label>
-              <select
-                value={selectedScreen || ''}
-                onChange={(e) => setSelectedScreen(e.target.value || null)}
-                className="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-amber-500 focus:border-amber-500"
-              >
-                <option value="">Select Screen</option>
-                {screens.map(screen => (
-                  <option key={screen.id} value={screen.id}>
-                    {screen.name} {screen.capacity ? `(${screen.capacity} seats)` : ''}
-                  </option>
-                ))}
-              </select>
+              <Select
+                value={
+                  selectedScreen
+                    ? screens.map(s => ({
+                      value: s.id,
+                      label: `${s.name}${s.capacity ? ` (${s.capacity} seats)` : ''}`,
+                    })).find(opt => opt.value === selectedScreen)
+                    : { value: '', label: 'Select Screen' }
+                }
+                onChange={(opt) => setSelectedScreen(opt?.value || null)}
+                options={[
+                  { value: '', label: 'Select Screen' },
+                  ...screens.map(s => ({
+                    value: s.id,
+                    label: `${s.name}${s.capacity ? ` (${s.capacity} seats)` : ''}`,
+                  })),
+                ]}
+                isSearchable
+                placeholder="Select Screen..."
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    borderColor: state.isFocused ? '#f59e0b' : '#d1d5db', // amber focus
+                    boxShadow: state.isFocused ? '0 0 0 1px #f59e0b' : 'none',
+                    minHeight: '38px',
+                    fontSize: '0.875rem',
+                  }),
+                }}
+              />
             </div>
+
           </div>
         </div>
 
@@ -355,7 +395,7 @@ export function POSInterface() {
           <div className="space-y-3">
             <button
               onClick={() => setShowPaymentModal(true)}
-              disabled={cart.length === 0}
+              disabled={cart.length === 0 && selectedAddons.length === 0}
               className="w-full bg-amber-600 text-white py-3 rounded-lg font-medium hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               <CreditCard className="h-4 w-4" />
