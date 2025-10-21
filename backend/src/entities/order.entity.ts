@@ -41,6 +41,12 @@ export class Order {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total: number;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  addonsTotal: number;
+
+  @Column({ type: 'json', nullable: true })
+  addons: any;
+
   @Column({ nullable: true, length: 150 })
   customerEmail: string;
 
@@ -95,6 +101,9 @@ export class Order {
 
   @Column({ type: 'json', nullable: true })
   metadata: any;
+
+  @Column({ type: 'longtext', nullable: true })
+  notes: string;
 
   @CreateDateColumn()
   createdAt: Date;

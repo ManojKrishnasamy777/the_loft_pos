@@ -33,13 +33,6 @@ export class CreateMenuItemDto {
   @IsString()
   image?: string;
 
-  @ApiProperty({ example: 0.18 })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Max(1)
-  taxRate?: number;
-
   @ApiProperty({ example: 1, required: false })
   @IsOptional()
   @IsNumber()

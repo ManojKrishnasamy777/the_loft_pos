@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ShoppingCart, CreditCard, Printer, Users, Layers, Plus } from 'lucide-react';
+import { Search, ShoppingCart, CreditCard, Printer, Users, Layers, Plus, Package } from 'lucide-react';
 import { mockMenuItems, mockCategories, loadMenuData } from '../../data/mockData';
 import { usePOS } from '../../contexts/POSContext';
-import { PaymentMethod, Customer, Screen, Receipt } from '../../types';
+import { PaymentMethod, Customer, Screen, Receipt, Addon } from '../../types';
 import { MenuItemCard } from './MenuItemCard';
 import { Cart } from './Cart';
 import { PaymentModal } from './PaymentModal';
 import { apiClient } from '../../config/api';
 import toast from 'react-hot-toast';
+import Select from 'react-select';
 
 export function POSInterface() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -23,13 +24,15 @@ export function POSInterface() {
   const [lastOrder, setLastOrder] = useState<any>(null);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [customerFormData, setCustomerFormData] = useState({ name: '', email: '', phone: '' });
-  const { cart, calculateTotals, clearCart } = usePOS();
+  const [availableAddons, setAvailableAddons] = useState<Addon[]>([]);
+  const { cart, selectedAddons, toggleAddon, updateAddonPrice, calculateTotals, clearCart } = usePOS();
 
   useEffect(() => {
     loadMenuData();
     fetchMenuItems();
     fetchCustomers();
     fetchScreens();
+    fetchAddons();
   }, []);
 
   const fetchMenuItems = async () => {
@@ -69,8 +72,21 @@ export function POSInterface() {
     }
   };
 
+  const fetchAddons = async () => {
+    try {
+      const data = await apiClient.getActiveAddons();
+      setAvailableAddons(data);
+    } catch (error) {
+      console.error('Failed to fetch addons:', error);
+    }
+  };
+
+
+
+
+
   const handlePrintReceipt = async (order: any) => {
-    debugger
+
     try {
       const settings = await apiClient.getSettings();
       const settingsMap = settings.reduce((acc: any, setting: any) => {
@@ -96,7 +112,7 @@ export function POSInterface() {
       };
 
       const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:3001/api/print/receipt', {
+      const response = await fetch('https://theloftpos.metabustech.com/api/print/receipt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -140,7 +156,7 @@ export function POSInterface() {
     return matchesCategory && matchesSearch && isActive && isAvailable;
   });
 
-  const { subtotal, taxAmount, total } = calculateTotals();
+  const { subtotal, taxAmount, addonsTotal, total } = calculateTotals();
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
@@ -223,18 +239,37 @@ export function POSInterface() {
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Customer</label>
               <div className="flex space-x-2">
-                <select
-                  value={selectedCustomer || ''}
-                  onChange={(e) => setSelectedCustomer(e.target.value || null)}
-                  className="flex-1 text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-amber-500 focus:border-amber-500"
-                >
-                  <option value="">Walk-in Customer</option>
-                  {customers.map(customer => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name} {customer.phone ? `(${customer.phone})` : ''}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex-1">
+                  <Select
+                    value={
+                      selectedCustomer
+                        ? customers.map(c => ({
+                          value: c.id,
+                          label: `${c.name}${c.phone ? ` (${c.phone})` : ''}`,
+                        })).find(opt => opt.value === selectedCustomer)
+                        : { value: '', label: 'Walk-in Customer' }
+                    }
+                    onChange={(opt) => setSelectedCustomer(opt?.value || null)}
+                    options={[
+                      { value: '', label: 'Walk-in Customer' },
+                      ...customers.map(c => ({
+                        value: c.id,
+                        label: `${c.name}${c.phone ? ` (${c.phone})` : ''}`,
+                      })),
+                    ]}
+                    isSearchable
+                    placeholder="Select customer..."
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        borderColor: state.isFocused ? '#f59e0b' : '#d1d5db', // amber focus color
+                        boxShadow: state.isFocused ? '0 0 0 1px #f59e0b' : 'none',
+                        minHeight: '38px',
+                        fontSize: '0.875rem',
+                      }),
+                    }}
+                  />
+                </div>
                 <button
                   onClick={() => setShowCustomerForm(true)}
                   className="bg-amber-600 text-white p-1.5 rounded-md hover:bg-amber-700"
@@ -243,27 +278,96 @@ export function POSInterface() {
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
+
             </div>
+
 
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Screen</label>
-              <select
-                value={selectedScreen || ''}
-                onChange={(e) => setSelectedScreen(e.target.value || null)}
-                className="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:ring-amber-500 focus:border-amber-500"
-              >
-                <option value="">Select Screen</option>
-                {screens.map(screen => (
-                  <option key={screen.id} value={screen.id}>
-                    {screen.name} {screen.capacity ? `(${screen.capacity} seats)` : ''}
-                  </option>
-                ))}
-              </select>
+              <Select
+                value={
+                  selectedScreen
+                    ? screens.map(s => ({
+                      value: s.id,
+                      label: `${s.name}${s.capacity ? ` (${s.capacity} seats)` : ''}`,
+                    })).find(opt => opt.value === selectedScreen)
+                    : { value: '', label: 'Select Screen' }
+                }
+                onChange={(opt) => setSelectedScreen(opt?.value || null)}
+                options={[
+                  { value: '', label: 'Select Screen' },
+                  ...screens.map(s => ({
+                    value: s.id,
+                    label: `${s.name}${s.capacity ? ` (${s.capacity} seats)` : ''}`,
+                  })),
+                ]}
+                isSearchable
+                placeholder="Select Screen..."
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    borderColor: state.isFocused ? '#f59e0b' : '#d1d5db', // amber focus
+                    boxShadow: state.isFocused ? '0 0 0 1px #f59e0b' : 'none',
+                    minHeight: '38px',
+                    fontSize: '0.875rem',
+                  }),
+                }}
+              />
             </div>
+
           </div>
         </div>
 
         <Cart />
+
+        {/* Addons Section */}
+        {availableAddons.length > 0 && (
+          <div className="border-t p-4">
+            <div className="flex items-center space-x-2 mb-3">
+              <Package className="h-4 w-4 text-amber-600" />
+              <h3 className="text-sm font-semibold text-gray-900">Add-ons</h3>
+            </div>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {availableAddons.map((addon) => {
+                const isSelected = selectedAddons.some((a) => a.id === addon.id);
+
+                // Get the current price from selectedAddons if selected, else use addon.price
+                const currentPrice = isSelected
+                  ? selectedAddons.find((a) => a.id === addon.id)?.price ?? ""
+                  : addon.price;
+
+                return (
+                  <label
+                    key={addon.id}
+                    className="flex items-center justify-between p-2 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleAddon(addon)}
+                        className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-900">{addon.name}</span>
+                    </div>
+
+                    <span className="text-sm font-medium text-gray-700">
+                      <input
+                        type="number"
+                        min="0"
+                        value={currentPrice}
+                        required
+                        onChange={(e) => updateAddonPrice(addon.id, e.target.value)}
+                        className="mt-1 block w-20 border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-amber-500 focus:border-amber-500"
+                      />
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+
+          </div>
+        )}
 
         {/* Order Summary and Actions */}
         <div className="border-t p-6 space-y-4">
@@ -272,20 +376,26 @@ export function POSInterface() {
               <span>Subtotal:</span>
               <span>₹{subtotal.toFixed(2)}</span>
             </div>
+            {selectedAddons.length > 0 && (
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Add-ons:</span>
+                <span>₹{Number(addonsTotal).toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm text-gray-600">
               <span>Tax:</span>
               <span>₹{taxAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t">
               <span>Total:</span>
-              <span>₹{total.toFixed(2)}</span>
+              <span>₹{Number(total).toFixed(2)}</span>
             </div>
           </div>
 
           <div className="space-y-3">
             <button
               onClick={() => setShowPaymentModal(true)}
-              disabled={cart.length === 0}
+              disabled={cart.length === 0 && selectedAddons.length === 0}
               className="w-full bg-amber-600 text-white py-3 rounded-lg font-medium hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               <CreditCard className="h-4 w-4" />

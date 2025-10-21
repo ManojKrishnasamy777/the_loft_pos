@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { apiClient } from '../../config/api';
+import Select from 'react-select';
 import {
   Package,
   Search,
@@ -12,7 +13,12 @@ import {
   Calendar,
   User,
   DollarSign,
-  CreditCard
+  CreditCard,
+  Printer,
+  Download,
+  DownloadCloud,
+  DownloadCloudIcon,
+  AlertCircle
 } from 'lucide-react';
 
 interface Order {
@@ -28,7 +34,26 @@ interface Order {
   paymentMethod: string;
   createdAt: string;
   items: any[];
+  addons: any[];
+  addonsTotal: string;
+  notes?: string;
+
 }
+
+const statusOptions = [
+  { value: '', label: 'All Status' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'refunded', label: 'Refunded' },
+];
+
+const paymentOptions = [
+  { value: '', label: 'All Payments' },
+  { value: 'cash', label: 'Cash' },
+  { value: 'card', label: 'Card' },
+  { value: 'upi', label: 'UPI' },
+];
 
 export function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -40,6 +65,16 @@ export function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [page, setPage] = useState(1);
   const limit = 20;
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+
+  const handleChange = (selectedOption: any) => {
+    setStatusFilter(selectedOption?.value || '');
+  };
+
+  const handlepaymentChange = (selectedOption: any) => {
+    setPaymentFilter(selectedOption?.value || '');
+  };
 
   useEffect(() => {
     loadOrders();
@@ -64,6 +99,33 @@ export function OrdersPage() {
     }
   };
 
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    setUpdatingStatus(true);
+    try {
+      await apiClient.updateOrderStatus(orderId, newStatus);
+      toast.success('Order status updated successfully');
+      await loadOrders();
+      if (selectedOrder && selectedOrder.id === orderId) {
+        const updatedOrder = await apiClient.getOrderById(orderId);
+        ;
+        setSelectedOrder(updatedOrder);
+      }
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      toast.error('Failed to update order status');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const DownloadPdf = async (order: any) => {
+    await apiClient.Downloadpdf(order);
+  };
+
+
+
+
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -72,6 +134,8 @@ export function OrdersPage() {
         return 'bg-yellow-100 text-yellow-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
+      case 'refunded':
+        return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -85,6 +149,8 @@ export function OrdersPage() {
         return <Clock className="h-4 w-4" />;
       case 'cancelled':
         return <XCircle className="h-4 w-4" />;
+      case 'refunded':
+        return <DollarSign className="h-4 w-4" />;
       default:
         return <Package className="h-4 w-4" />;
     }
@@ -117,28 +183,47 @@ export function OrdersPage() {
               <div className="flex space-x-3">
                 <div className="flex items-center space-x-2">
                   <Filter className="h-5 w-5 text-gray-400" />
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-amber-500 focus:border-amber-500"
-                  >
-                    <option value="">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
+                  <Select
+                    value={statusOptions.find(option => option.value === statusFilter)}
+                    onChange={handleChange}
+                    options={statusOptions}
+                    isClearable
+                    className="text-sm"
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        borderColor: '#d1d5db', // Tailwind gray-300
+                        borderRadius: '0.375rem', // Tailwind rounded-md
+                        minHeight: '38px',
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 9999,
+                      }),
+                    }}
+                  />
                 </div>
 
-                <select
-                  value={paymentFilter}
-                  onChange={(e) => setPaymentFilter(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-amber-500 focus:border-amber-500"
-                >
-                  <option value="">All Payments</option>
-                  <option value="cash">Cash</option>
-                  <option value="card">Card</option>
-                  <option value="upi">UPI</option>
-                </select>
+                <Select
+                  value={paymentOptions.find(option => option.value === paymentFilter)}
+                  onChange={handlepaymentChange}
+                  options={paymentOptions}
+                  isClearable
+                  className="text-sm"
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      borderColor: '#d1d5db', // Tailwind gray-300
+                      borderRadius: '0.375rem', // Tailwind rounded-md
+                      minHeight: '38px',
+                      padding: '0 0.25rem',
+                    }),
+                    menu: (base) => ({
+                      ...base,
+                      zIndex: 9999,
+                    }),
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -188,7 +273,7 @@ export function OrdersPage() {
                                 {order.orderNumber}
                               </div>
                               <div className="text-xs text-gray-500">
-                                {order.items?.length || 0} items
+                                {order.items?.length || 0} items || {order.addons?.length || 0} add-ons
                               </div>
                             </div>
                           </div>
@@ -232,13 +317,20 @@ export function OrdersPage() {
                             {new Date(order.createdAt).toLocaleTimeString()}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm flex">
                           <button
                             onClick={() => setSelectedOrder(order)}
-                            className="text-amber-600 hover:text-amber-900 flex items-center space-x-1"
+                            className="text-amber-600 hover:text-amber-900 flex items-center space-x-1 mr-2"
                           >
                             <Eye className="h-4 w-4" />
-                            <span>View</span>
+                            {/* <span>View</span> */}
+                          </button>
+                          <button
+                            onClick={() => DownloadPdf(order)}
+                            className="text-amber-600 hover:text-amber-900 flex items-center space-x-1"
+                          >
+                            <DownloadCloudIcon className="h-4 w-4" />
+                            {/* <span>View</span> */}
                           </button>
                         </td>
                       </tr>
@@ -306,13 +398,25 @@ export function OrdersPage() {
                   <p className="text-lg font-semibold text-gray-900">{selectedOrder.orderNumber}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Status</p>
-                  <span
-                    className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}
-                  >
-                    {getStatusIcon(selectedOrder.status)}
-                    <span className="capitalize">{selectedOrder.status}</span>
-                  </span>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Status</p>
+                  <div className="flex items-center space-x-2">
+                    <select
+                      value={selectedOrder.status}
+                      onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value)}
+                      disabled={updatingStatus}
+                      className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-amber-500 focus:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                      <option value="refunded">Refunded</option>
+                    </select>
+                    <span
+                      className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}
+                    >
+                      {getStatusIcon(selectedOrder.status)}
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Customer</p>
@@ -352,12 +456,83 @@ export function OrdersPage() {
                   })}
                 </div>
               </div>
+              {selectedOrder?.addons?.length > 0 ? (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Add-On Items</h3>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    {selectedOrder.addons.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-4 border-b border-gray-200 last:border-b-0"
+                      >
+                        <div>
+                          <p className="font-medium text-gray-900">{item?.name || 'Item'}</p>
+                          {/* <p className="text-sm text-gray-600">
+              Qty: {item.quantity} × ₹{Number(item.price).toFixed(2)}
+            </p> */}
+                        </div>
+                        <p className="font-medium text-gray-900">
+                          ₹{Number(item.price).toFixed(2)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Add-On Items</h3>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+
+                    <div
+                      className="flex justify-between items-center p-4 border-b border-gray-200 last:border-b-0"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">No add-on items.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+
+
+
+              {/* <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Notes</h3>
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+
+                  <div
+                    className="flex justify-between items-center p-4 border-b border-gray-200 last:border-b-0"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900">{selectedOrder.notes}</p>
+
+                    </div>
+                  </div>
+                </div>
+              </div> */}
+
+              {selectedOrder?.notes?.trim() !== '' && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex gap-3">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-medium mb-1">Notes</p>
+                    <p>{selectedOrder.notes}</p>
+                  </div>
+                </div>
+              )}
+
 
               {/* Totals */}
               <div className="border-t border-gray-200 pt-4 space-y-2">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
                   <span>₹{Number(selectedOrder.subtotal ?? 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Add-on Total</span>
+                  <span>₹{Number(selectedOrder.addonsTotal ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Tax</span>

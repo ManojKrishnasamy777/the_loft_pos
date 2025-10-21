@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://theloftpos.metabustech.com//api';
 
 class ApiClient {
   private baseURL: string;
@@ -131,6 +131,77 @@ class ApiClient {
 
     return this.request<any>(`/orders/stats?${params.toString()}`);
   }
+
+  async updateOrderStatus(orderId: string, status: string) {
+    return this.request<any>(`/orders/${orderId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async Downloadpdf(data: any) {
+
+
+    const response = await fetch(`${this.baseURL}/orders/DownloadPDF`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Include auth token if needed
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to download PDF');
+    }
+
+    // IMPORTANT: get the response as a Blob
+    this.PdfDownloadAsBlob(response, false, 'INVOICE - ' + data.orderNumber + '.pdf');
+  }
+
+  async PdfDownloadAsBlob(response: any, view: boolean = false, filename: string = "") {
+    try {
+      // Ensure response is a Blob
+      const blob = response instanceof Blob ? response : await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+
+      if (view) {
+        window.open(objectUrl, '_blank');
+      } else {
+        const link = document.createElement('a');
+        link.href = objectUrl;
+
+        // Handling content-disposition for filename
+        const contentDisposition = response.headers?.get
+          ? response.headers.get('content-disposition')
+          : response.headers?.['content-disposition'];
+
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = contentDisposition ? filenameRegex.exec(contentDisposition) : null;
+
+        if (matches && matches[1]) {
+          link.download = matches[1].replace(/['"]/g, '');
+        } else if (filename) {
+          link.download = filename;
+        } else {
+          link.download = 'download.pdf';
+        }
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      // Release the object URL
+      window.URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.error("Error handling file download:", error);
+    }
+  }
+
+
+
 
   // Payment endpoints
   async createRazorpayOrder(orderId: string) {
@@ -456,6 +527,10 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(receipt),
     });
+  }
+
+  async getActiveAddons() {
+    return this.request<any[]>('/addons/active');
   }
 }
 

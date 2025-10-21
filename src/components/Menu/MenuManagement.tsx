@@ -9,7 +9,7 @@ interface MenuItem {
   name: string;
   description: string;
   price: number;
-  taxRate: number;
+
   categoryId: string;
   category?: Category;
   isActive: boolean;
@@ -41,14 +41,14 @@ export function MenuManagement() {
     name: '',
     description: '',
     price: '',
-    taxRate: '0.05',
+
     categoryId: '',
     isActive: true,
     sortOrder: 0,
     image: ''
   });
 
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedImage, setSelectedImage] = useState<Base64URLString | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -81,20 +81,37 @@ export function MenuManagement() {
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be less than 5MB');
-        return;
-      }
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Limit file size to 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5MB");
+      return;
     }
+
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+
+      // Example: set full base64 DataURL for preview
+      setImagePreview(base64String);
+      setSelectedImage(base64String);
+
+      // OR extract only the Base64 part (optional)
+      const pureBase64 = base64String.split(",")[1];
+      console.log("Base64 string:", pureBase64);
+    };
+
+    reader.onerror = () => {
+      console.error("Error reading file");
+    };
+
+    reader.readAsDataURL(file);
   };
+
 
   const handleRemoveImage = () => {
     setSelectedImage(null);
@@ -104,18 +121,13 @@ export function MenuManagement() {
 
   const handleSaveItem = async () => {
     try {
+      ;
       setUploadingImage(true);
-      let imageUrl = itemForm.image;
-
-      if (selectedImage) {
-        imageUrl = await imageService.uploadImage(selectedImage);
-      }
-
       const data = {
         ...itemForm,
         price: parseFloat(itemForm.price),
-        taxRate: parseFloat(itemForm.taxRate),
-        image: imageUrl
+
+        image: selectedImage
       };
 
       if (editingItem) {
@@ -190,7 +202,7 @@ export function MenuManagement() {
       name: item.name,
       description: item.description,
       price: item.price.toString(),
-      taxRate: item.taxRate.toString(),
+
       categoryId: item.categoryId,
       isActive: item.isActive,
       sortOrder: item.sortOrder,
@@ -218,7 +230,7 @@ export function MenuManagement() {
       name: '',
       description: '',
       price: '',
-      taxRate: '0.05',
+
       categoryId: '',
       isActive: true,
       sortOrder: 0,
@@ -369,7 +381,6 @@ export function MenuManagement() {
                         <p className="text-sm text-gray-600 mb-3">{item.description}</p>
                         <div className="flex justify-between items-center">
                           <span className="text-lg font-bold text-amber-600">₹{Number(item.price || 0).toFixed(2)}</span>
-                          <span className="text-xs text-gray-500">Tax: {(Number(item.taxRate || 0) * 100).toFixed(0)}%</span>
                         </div>
                       </div>
                     </div>
@@ -428,8 +439,8 @@ export function MenuManagement() {
       </div>
 
       {showItemModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-md w-full my-8">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">
@@ -447,7 +458,7 @@ export function MenuManagement() {
               </div>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
                 <div className="space-y-3">
@@ -508,30 +519,16 @@ export function MenuManagement() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={itemForm.price}
-                    onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                    placeholder="0.00"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tax Rate</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={itemForm.taxRate}
-                    onChange={(e) => setItemForm({ ...itemForm, taxRate: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                    placeholder="0.05"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={itemForm.price}
+                  onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="0.00"
+                />
               </div>
 
               <div>
@@ -595,8 +592,8 @@ export function MenuManagement() {
       )}
 
       {showCategoryModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-md w-full my-8">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">

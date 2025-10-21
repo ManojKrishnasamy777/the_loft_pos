@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiClient } from '../config/api';
-import { MenuItem, OrderItem, Order, PaymentMethod, TaxConfiguration } from '../types';
+import { MenuItem, OrderItem, Order, PaymentMethod, TaxConfiguration, Addon } from '../types';
 import { EmailService } from '../services/emailService';
 
 interface CartItem {
@@ -10,13 +10,17 @@ interface CartItem {
 
 interface POSContextType {
   cart: CartItem[];
+  selectedAddons: Addon[];
   addToCart: (item: MenuItem) => void;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
+  toggleAddon: (addon: Addon) => void;
+  updateAddonPrice: (addonId: string, price: number) => void;
   calculateTotals: () => {
     subtotal: number;
     taxAmount: number;
+    addonsTotal: number;
     total: number;
   };
   processOrder: (customerData: {
@@ -26,27 +30,38 @@ interface POSContextType {
     screenId?: string;
     paymentMethod: PaymentMethod;
     paymentData?: any;
+    notes?: string;
   }) => Promise<Order>;
 }
 
 const POSContext = createContext<POSContextType | undefined>(undefined);
 
-// Mock tax configuration
-const mockTaxConfig: TaxConfiguration = {
-  id: '1',
-  name: 'GST',
-  rate: 0.18, // 18%
-  isActive: true,
-  isDefault: true
-};
-
 export function POSProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
+  const [globalTaxRate, setGlobalTaxRate] = useState<number>(0.18);
+
+  useEffect(() => {
+    loadTaxRate();
+  }, []);
+
+  const loadTaxRate = async () => {
+    try {
+
+      const settings = await apiClient.getSettings();
+      const taxRateSetting = settings.find((s: any) => s.key === 'tax_rate');
+      if (taxRateSetting) {
+        setGlobalTaxRate(parseFloat(taxRateSetting.value));
+      }
+    } catch (error) {
+      console.error('Failed to load tax rate:', error);
+    }
+  };
 
   const addToCart = (item: MenuItem) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(cartItem => cartItem.menuItem.id === item.id);
-      
+
       if (existingItem) {
         return prevCart.map(cartItem =>
           cartItem.menuItem.id === item.id
@@ -54,7 +69,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
             : cartItem
         );
       }
-      
+
       return [...prevCart, { menuItem: item, quantity: 1 }];
     });
   };
@@ -68,7 +83,7 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
       removeFromCart(itemId);
       return;
     }
-    
+
     setCart(prevCart =>
       prevCart.map(item =>
         item.menuItem.id === itemId
@@ -80,18 +95,45 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = () => {
     setCart([]);
+    setSelectedAddons([]);
   };
 
+  const toggleAddon = (addon: Addon) => {
+    ;
+    setSelectedAddons(prev => {
+      const exists = prev.find(a => a.id === addon.id);
+      if (exists) {
+        return prev.filter(a => a.id !== addon.id);
+      }
+      return [...prev, addon];
+    });
+  };
+
+  const updateAddonPrice = (addonId: string, price: number) => {
+    setSelectedAddons(prev =>
+      prev.map(addon =>
+        addon.id === addonId ? { ...addon, price: Number(price) } : addon
+      )
+    );
+  };
+
+
   const calculateTotals = () => {
+
     const subtotal = cart.reduce(
       (sum, item) => sum + (item.menuItem.price * item.quantity),
       0
     );
-    
-    const taxAmount = subtotal * mockTaxConfig.rate;
-    const total = subtotal + taxAmount;
-    
-    return { subtotal, taxAmount, total };
+
+    const addonsTotal = selectedAddons.reduce(
+      (sum, addon) => sum + Number(addon.price),
+      0
+    );
+
+    const taxAmount = subtotal * globalTaxRate;
+    const total = subtotal + taxAmount + addonsTotal;
+
+    return { subtotal, taxAmount, addonsTotal, total };
   };
 
   const processOrder = async (customerData: {
@@ -101,31 +143,35 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
     screenId?: string;
     paymentMethod: PaymentMethod;
     paymentData?: any;
+    notes?: string;
   }): Promise<Order> => {
     try {
+      debugger
       const orderData = {
         items: cart.map(cartItem => ({
           menuItemId: cartItem.menuItem.id,
           quantity: cartItem.quantity,
         })),
+        addonIds: selectedAddons.map(addon => addon),
         customerEmail: customerData.email,
         customerName: customerData.name,
         customerId: customerData.customerId,
         screenId: customerData.screenId,
         paymentMethod: customerData.paymentMethod,
         metadata: customerData.paymentData,
+        notes: customerData.notes || undefined,
       };
 
       const order = await apiClient.createOrder(orderData);
 
-      if (customerData.email && order.status === 'completed') {
-        try {
-          await EmailService.sendOrderConfirmation(order);
-          console.log('Order confirmation email sent to:', customerData.email);
-        } catch (emailError) {
-          console.error('Failed to send confirmation email:', emailError);
-        }
-      }
+      // if (customerData.email && order.status === 'completed') {
+      //   try {
+      //     await EmailService.sendOrderConfirmation(order);
+      //     console.log('Order confirmation email sent to:', customerData.email);
+      //   } catch (emailError) {
+      //     console.error('Failed to send confirmation email:', emailError);
+      //   }
+      // }
 
       try {
         const receipt = {
@@ -163,10 +209,13 @@ export function POSProvider({ children }: { children: React.ReactNode }) {
   return (
     <POSContext.Provider value={{
       cart,
+      selectedAddons,
       addToCart,
       removeFromCart,
       updateQuantity,
       clearCart,
+      toggleAddon,
+      updateAddonPrice,
       calculateTotals,
       processOrder
     }}>

@@ -14,6 +14,10 @@ import { ScreensModule } from './modules/screens/screens.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { EmailModule } from './modules/email/email.module';
 import { PrinterModule } from './modules/printer/printer.module';
+import { UploadModule } from './modules/upload/upload.module';
+import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
+import { AddonsModule } from './modules/addons/addons.module';
+import { StorageModule } from './common/storage/storage.module';
 
 @Module({
   imports: [
@@ -33,7 +37,11 @@ import { PrinterModule } from './modules/printer/printer.module';
     CustomersModule,
     AuditModule,
     EmailModule,
-    PrinterModule
+    PrinterModule,
+    UploadModule,
+    WhatsAppModule,
+    AddonsModule,
+    StorageModule
   ],
 })
 export class AppModule { }

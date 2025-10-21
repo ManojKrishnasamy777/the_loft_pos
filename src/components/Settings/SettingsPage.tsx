@@ -10,7 +10,9 @@ import {
   Database,
   Monitor,
   Mail,
-  Key
+  Key,
+  MessageCircle,
+  Package
 } from 'lucide-react';
 import { PaymentSettings } from './PaymentSettings';
 import { PrinterSettings } from './PrinterSettings';
@@ -23,32 +25,38 @@ import { ScreenManagement } from '../Screens/screens';
 import EmailSettings from './EmailSettings';
 import { RoleManagement } from './RoleManagement';
 import { PermissionManagement } from './PermissionManagement';
+import { WhatsAppMessaging } from './WhatsAppMessaging';
+import { AddonSettings } from './AddonSettings';
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState('payment');
 
   const tabs = [
-    { id: 'payment', name: 'Payment Gateway', icon: CreditCard },
-    { id: 'printer', name: 'Thermal Printer', icon: Printer },
-    { id: 'tax', name: 'Tax Settings', icon: Calculator },
+    // { id: 'payment', name: 'Payment Gateway', icon: CreditCard },
+    // { id: 'printer', name: 'Thermal Printer', icon: Printer },
     { id: 'users', name: 'User Management', icon: Users },
     { id: 'roles', name: 'Role Management', icon: Shield },
     { id: 'permissions', name: 'Permissions', icon: Key },
+    { id: 'tax', name: 'Tax Settings', icon: Calculator },
+    { id: 'addons', name: 'Addons', icon: Package },
     { id: 'screen', name: 'Screens', icon: Monitor },
     { id: 'email', name: 'Email Configuration', icon: Mail },
-    { id: 'security', name: 'Security', icon: Shield },
-    { id: 'notifications', name: 'Notifications', icon: Bell },
-    { id: 'backup', name: 'Backup & Restore', icon: Database }
+    { id: 'whatsapp', name: 'WhatsApp Messaging', icon: MessageCircle },
+    // { id: 'security', name: 'Security', icon: Shield },
+    // { id: 'notifications', name: 'Notifications', icon: Bell },
+    // { id: 'backup', name: 'Backup & Restore', icon: Database }
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'payment':
-        return <PaymentSettings />;
-      case 'printer':
-        return <PrinterSettings />;
+      // case 'payment':
+      //   return <PaymentSettings />;
+      // case 'printer':
+      //   return <PrinterSettings />;
       case 'tax':
         return <TaxSettings />;
+      case 'addons':
+        return <AddonSettings />;
       case 'users':
         return <UserManagement />;
       case 'roles':
@@ -59,14 +67,16 @@ export function SettingsPage() {
         return <ScreenManagement />;
       case 'email':
         return <EmailSettings />;
-      case 'security':
-        return <SecuritySettings />;
-      case 'notifications':
-        return <NotificationSettings />;
-      case 'backup':
-        return <BackupSettings />;
+      case 'whatsapp':
+        return <WhatsAppMessaging />;
+      // case 'security':
+      //   return <SecuritySettings />;
+      // case 'notifications':
+      //   return <NotificationSettings />;
+      // case 'backup':
+      //   return <BackupSettings />;
       default:
-        return <PaymentSettings />;
+        return <UserManagement />;
     }
   };
 

@@ -55,7 +55,7 @@ export default function EmailSettings() {
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    debugger
+
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -69,7 +69,7 @@ export default function EmailSettings() {
   };
 
   const handleSave = async () => {
-    debugger
+
     setIsSaving(true);
     setError('');
     setTestResult(null);
